@@ -138,6 +138,9 @@ class GifDisplay : public edm::one::EDAnalyzer<edm::one::SharedResources>  {
       virtual void analyze(const edm::Event&, const edm::EventSetup&) override;
       virtual void endJob() override;
 
+      void fillALCT(edm::Handle<CSCALCTDigiCollection> digicollection, vector<CSCIDLCTs>& alct_container);
+      void fillCLCT(edm::Handle<CSCCLCTDigiCollection> digicollection, vector<CSCIDLCTs>& clct_container);
+      void fillCorrLCT(edm::Handle<CSCCorrelatedLCTDigiCollection> digicollection, vector<CSCIDLCTs>& lct_container);
 // ----------member data ---------------------------
 //edm::InputTag stripDigiTag;
 //edm::InputTag wireDigiTag;
@@ -145,16 +148,22 @@ class GifDisplay : public edm::one::EDAnalyzer<edm::one::SharedResources>  {
   edm::EDGetTokenT<CSCWireDigiCollection> wireDigiTagSrc;
   edm::EDGetTokenT<CSCStripDigiCollection> stripDigiTagSrc;
   edm::EDGetTokenT<CSCComparatorDigiCollection> compDigiTagSrc;
+  edm::EDGetTokenT<CSCALCTDigiCollection> alctDigiTagSrc;
   edm::EDGetTokenT<CSCCLCTDigiCollection> clctDigiTagSrc;
+  edm::EDGetTokenT<CSCCorrelatedLCTDigiCollection> corrlctDigiTagSrc;
+
+  edm::EDGetTokenT<CSCALCTDigiCollection> alctDigiTagSrc_emul;
+  edm::EDGetTokenT<CSCCLCTDigiCollection> clctDigiTagSrc_emul;
+  edm::EDGetTokenT<CSCCorrelatedLCTDigiCollection> corrlctDigiTagSrc_emul;
 
 //edm::InputTag compDigiTag;
-edm::InputTag cscRecHitTag;
+//edm::InputTag cscRecHitTag;
 //edm::InputTag cscSegTag;
 //edm::InputTag saMuonTag;
 //edm::InputTag l1aTag;
-edm::InputTag alctDigiTag;
-edm::InputTag clctDigiTag;
-edm::InputTag corrlctDigiTag;
+//edm::InputTag alctDigiTag;
+//edm::InputTag clctDigiTag;
+//edm::InputTag corrlctDigiTag;
 //edm::InputTag hltTag;
 
 //std::string theRootFileName,pdf;
@@ -168,6 +177,8 @@ std::string eventlistFile;
 
 std::string chamberType;
 
+bool doDebug;
+bool addEmulation ;
 };
 
 //
@@ -200,11 +211,21 @@ fout->cd();
   stripDigiTagSrc=consumes<CSCStripDigiCollection>(iConfig.getUntrackedParameter<edm::InputTag>("stripDigiTagSrc")),
   compDigiTagSrc=consumes<CSCComparatorDigiCollection>(iConfig.getUntrackedParameter<edm::InputTag>("compDigiTagSrc")),
 //alctDigiTag = iConfig.getParameter<edm::InputTag>("alctDigiTag");
-clctDigiTagSrc = consumes<CSCCLCTDigiCollection>(iConfig.getUntrackedParameter<edm::InputTag>("clctDigiTagSrc"));
-//corrlctDigiTag = iConfig.getParameter<edm::InputTag>("corrlctDigiTag");
-eventDisplayDir = iConfig.getUntrackedParameter<std::string>("eventDisplayDir","/home/mhl/public_html/2017/20171025_cscSeg/eventdisplay/");
-eventlistFile = "eventList.txt";
-chamberType = iConfig.getUntrackedParameter<std::string>("chamberType", "11");
+  alctDigiTagSrc = consumes<CSCALCTDigiCollection>(iConfig.getUntrackedParameter<edm::InputTag>("alctDigiTagSrc"));
+  clctDigiTagSrc = consumes<CSCCLCTDigiCollection>(iConfig.getUntrackedParameter<edm::InputTag>("clctDigiTagSrc"));
+  corrlctDigiTagSrc = consumes<CSCCorrelatedLCTDigiCollection>(iConfig.getUntrackedParameter<edm::InputTag>("corrlctDigiTagSrc"));
+
+  alctDigiTagSrc_emul = consumes<CSCALCTDigiCollection>(iConfig.getUntrackedParameter<edm::InputTag>("alctDigiTagSrc_Emul"));
+  clctDigiTagSrc_emul = consumes<CSCCLCTDigiCollection>(iConfig.getUntrackedParameter<edm::InputTag>("clctDigiTagSrc_Emul"));
+  corrlctDigiTagSrc_emul = consumes<CSCCorrelatedLCTDigiCollection>(iConfig.getUntrackedParameter<edm::InputTag>("corrlctDigiTagSrc_Emul"));
+
+
+
+  eventDisplayDir = iConfig.getUntrackedParameter<std::string>("eventDisplayDir","/home/mhl/public_html/2017/20171025_cscSeg/eventdisplay/");
+  eventlistFile = "eventList.txt";
+  chamberType = iConfig.getUntrackedParameter<std::string>("chamberType", "11");
+  doDebug = iConfig.getUntrackedParameter<bool>("debug", false);
+  addEmulation = iConfig.getUntrackedParameter<bool>("addEmulation", false);
 }
 
 
@@ -235,7 +256,6 @@ int testE = 2;
 int testS = 1;
 int testR = 1;
 int testC = 21;
-bool doDebug = false;
 
 edm::ESHandle<CSCGeometry> cscGeom;
 iSetup.get<MuonGeometryRecord>().get(cscGeom);
@@ -257,6 +277,14 @@ eventList.clear();
 vector<WIRE>   wire_container;
 vector<STRIP>  strip_container;
 vector<COMPARATOR> com_container;
+//vector<CSCALCTDigi> alct_container;
+//vector<CSCCLCTDigi> clct_container;
+vector<CSCIDLCTs> alct_container;
+vector<CSCIDLCTs> alct_emul_container;
+vector<CSCIDLCTs> clct_container;
+vector<CSCIDLCTs> clct_emul_container;
+vector<CSCIDLCTs> lct_container;
+vector<CSCIDLCTs> lct_emul_container;
 
 //==========================Get event list for display================
 ifstream file(eventlistFile);
@@ -483,33 +511,43 @@ if (doDebug) {
 
 }//comparator collection
 
-
+//ALCT
+edm::Handle<CSCALCTDigiCollection> alcts;
+iEvent.getByToken(alctDigiTagSrc, alcts);
+fillALCT(alcts, alct_container);
 
 // CLCT
 edm::Handle<CSCCLCTDigiCollection> clcts;
 iEvent.getByToken(clctDigiTagSrc, clcts);
+fillCLCT(clcts, clct_container);
 
-for (CSCCLCTDigiCollection::DigiRangeIterator j=clcts->begin(); j!=clcts->end(); j++) {
-    const CSCCLCTDigiCollection::Range& range =(*j).second;
-    const CSCDetId& idCLCT = (*j).first;
-if (doDebug) {
-   if (!(idCLCT.endcap() == testE && idCLCT.station() == testS && idCLCT.ring() == testR && idCLCT.chamber() == testC ) ) continue;
-   }
 
-    for (CSCCLCTDigiCollection::const_iterator digiIt = range.first; digiIt!=range.second; ++digiIt){
+// LCT
+edm::Handle<CSCCorrelatedLCTDigiCollection> lcts;
+iEvent.getByToken(corrlctDigiTagSrc, lcts);
+fillCorrLCT(lcts, lct_container);
 
-if (doDebug) cout << idCLCT << endl;
-if (doDebug) {
-//cout << "strip: " << digiIt->getKeyStrip() << endl;
-//cout << "pattern: " << digiIt->getPattern() << endl;
-//cout << "quality: " << digiIt->getQuality() << endl;
+//ALCT
+edm::Handle<CSCALCTDigiCollection> alcts_emul;
+// CLCT
+edm::Handle<CSCCLCTDigiCollection> clcts_emul;
+// LCT
+edm::Handle<CSCCorrelatedLCTDigiCollection> lcts_emul;
+if (addEmulation){
+   try{
+	  iEvent.getByToken(alctDigiTagSrc_emul, alcts_emul);
+	  fillALCT(alcts_emul, alct_emul_container);
 
+	  iEvent.getByToken(clctDigiTagSrc_emul, clcts_emul);
+	  fillCLCT(clcts_emul, clct_emul_container);
+
+	  iEvent.getByToken(corrlctDigiTagSrc_emul, lcts_emul);
+	  fillCorrLCT(lcts_emul, lct_emul_container);
+   } catch (cms::Exception){
+     std::cout <<" failed to emulated trigger primitives, ignore "<< std::endl;
+     addEmulation = false;
+  }
 }
-
-
-        }
-
-    }
 
 //make event display
 vector<CSCDetID> usedChamber;
@@ -535,7 +573,7 @@ for (int i = 0; i < int(eventList.size()); i++) {
    tmpId.Ring = ringL;
    tmpId.Chamber = chamberL;
 
-   WireStripDisplay(eventDisplayDir, tmpId, wire_container, strip_container, com_container, usedChamber, Run, Event);
+   WireStripDisplay(eventDisplayDir, tmpId, wire_container, strip_container, com_container, alct_container, alct_emul_container, clct_container, clct_emul_container, lct_container, lct_emul_container, usedChamber, Run, Event, addEmulation);
 }
 //   }
 
@@ -553,6 +591,140 @@ for (int i = 0; i < int(eventList.size()); i++) {
    ESHandle<SetupData> pSetup;
    iSetup.get<SetupRecord>().get(pSetup);
 #endif
+}
+
+
+
+void GifDisplay::fillALCT(edm::Handle<CSCALCTDigiCollection> digicoll, vector<CSCIDLCTs>& alct_container){
+
+ for (CSCALCTDigiCollection::DigiRangeIterator j=digicoll->begin(); j!=digicoll->end(); j++) {
+    const CSCALCTDigiCollection::Range& range =(*j).second;
+    const CSCDetId& idLCT = (*j).first;
+
+   CSCIDLCTs tmpidlcts;
+   CSCDetID tmpID;
+   
+
+   tmpID.Endcap = idLCT.endcap();
+   tmpID.Ring = idLCT.ring();// ? 1 : id.ring();
+   tmpID.Station = idLCT.station();
+   tmpID.Chamber = idLCT.chamber();
+   tmpID.Layer = idLCT.layer();
+
+   tmpidlcts.first = tmpID ;
+
+    for (CSCALCTDigiCollection::const_iterator digiIt = range.first; digiIt!=range.second; ++digiIt){
+	if (!digiIt->isValid()) continue;
+	CorrelatedLCT tmplct;
+	tmplct.keyWG = digiIt->getKeyWG();
+	tmplct.quality =  digiIt->getQuality();
+	tmplct.pattern = digiIt->getCollisionB();
+	tmplct.BX = digiIt->getBX();
+	tmpidlcts.second.push_back(tmplct);
+
+	  if (doDebug) cout << idLCT << endl;
+	  if (doDebug) {
+	  cout << "ALCT strip: " << tmplct.keyStrip;
+	  cout << " keyWG: " << tmplct.keyWG;
+	  cout << " pattern: " << tmplct.pattern;
+	  cout << " quality: " << tmplct.quality << endl;
+
+	  }
+
+
+        }
+   alct_container.push_back(tmpidlcts);
+
+  }
+}
+
+
+void GifDisplay::fillCLCT(edm::Handle<CSCCLCTDigiCollection> digicoll, vector<CSCIDLCTs>& clct_container){
+
+ for (CSCCLCTDigiCollection::DigiRangeIterator j=digicoll->begin(); j!=digicoll->end(); j++) {
+    const CSCCLCTDigiCollection::Range& range =(*j).second;
+    const CSCDetId& idLCT = (*j).first;
+
+   CSCIDLCTs tmpidlcts;
+   CSCDetID tmpID;
+   
+
+   tmpID.Endcap = idLCT.endcap();
+   tmpID.Ring = idLCT.ring();// ? 1 : id.ring();
+   tmpID.Station = idLCT.station();
+   tmpID.Chamber = idLCT.chamber();
+   tmpID.Layer = idLCT.layer();
+
+   tmpidlcts.first = tmpID ;
+
+    for (CSCCLCTDigiCollection::const_iterator digiIt = range.first; digiIt!=range.second; ++digiIt){
+	if (!digiIt->isValid()) continue;
+	CorrelatedLCT tmplct;
+	tmplct.keyStrip = digiIt->getKeyStrip() ;
+	tmplct.quality =  digiIt->getQuality();
+	tmplct.pattern = digiIt->getPattern();
+	tmplct.BX = digiIt->getBX();
+	tmpidlcts.second.push_back(tmplct);
+
+	  if (doDebug) cout << idLCT << endl;
+	  if (doDebug) {
+	  cout << "CLCT strip: " << tmplct.keyStrip;
+	  cout << " keyWG: " << tmplct.keyWG;
+	  cout << " pattern: " << tmplct.pattern;
+	  cout << " quality: " << tmplct.quality << endl;
+
+	  }
+
+
+        }
+   clct_container.push_back(tmpidlcts);
+
+  }
+}
+
+
+void GifDisplay::fillCorrLCT(edm::Handle<CSCCorrelatedLCTDigiCollection> digicoll, vector<CSCIDLCTs>& lct_container){
+
+ for (CSCCorrelatedLCTDigiCollection::DigiRangeIterator j=digicoll->begin(); j!=digicoll->end(); j++) {
+    const CSCCorrelatedLCTDigiCollection::Range& range =(*j).second;
+    const CSCDetId& idLCT = (*j).first;
+
+   CSCIDLCTs tmpidlcts;
+   CSCDetID tmpID;
+   
+
+   tmpID.Endcap = idLCT.endcap();
+   tmpID.Ring = idLCT.ring();// ? 1 : id.ring();
+   tmpID.Station = idLCT.station();
+   tmpID.Chamber = idLCT.chamber();
+   tmpID.Layer = idLCT.layer();
+
+   tmpidlcts.first = tmpID ;
+
+    for (CSCCorrelatedLCTDigiCollection::const_iterator digiIt = range.first; digiIt!=range.second; ++digiIt){
+	if (!digiIt->isValid()) continue;
+	CorrelatedLCT tmplct;
+	tmplct.keyWG = digiIt->getKeyWG();
+	tmplct.keyStrip = digiIt->getStrip() ;
+	tmplct.quality =  digiIt->getQuality();
+	tmplct.pattern = digiIt->getPattern();
+	tmplct.BX = digiIt->getBX();
+	tmpidlcts.second.push_back(tmplct);
+
+	  if (doDebug) cout << idLCT << endl;
+	  if (doDebug) {
+	  cout << "CorrelatedLCT strip: " << digiIt->getStrip();
+	  cout << " keyWG: " << digiIt->getKeyWG();
+	  cout << " pattern: " << digiIt->getPattern();
+	  cout << " quality: " << digiIt->getQuality() << endl;
+
+	  }
+
+
+        }
+   lct_container.push_back(tmpidlcts);
+
+  }
 }
 
 

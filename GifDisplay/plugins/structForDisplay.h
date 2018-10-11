@@ -147,4 +147,18 @@ struct Comparator{
 };
 
 
-
+struct CorrelatedLCT{
+  int keyStrip;
+  int keyWG;
+  int quality;
+  int pattern;
+  int BX;
+  CorrelatedLCT(){
+      this->keyStrip = -1;
+      this->keyWG = -1;
+      this->quality = -1;
+      this->pattern = -1;
+	this->BX = -1;
+  
+  }
+};

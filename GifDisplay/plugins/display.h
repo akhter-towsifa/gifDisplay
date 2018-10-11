@@ -20,8 +20,13 @@ using namespace std;
 typedef pair<CSCDetID, vector<Wire> > WIRE;
 typedef pair<CSCDetID, vector<Strips> > STRIP;
 typedef pair<CSCDetID, vector<Comparator> > COMPARATOR;
+typedef pair<CSCDetID, vector<CorrelatedLCT> > CSCIDLCTs;
 
-void WireStripDisplay(TString address, CSCDetID id, vector<WIRE> &wire, vector<STRIP> &strip, vector<COMPARATOR> &comparator, vector<CSCDetID> &usedChamber, int Run, int Event);
+void WireStripDisplay(TString address, CSCDetID id, vector<WIRE> &wire, vector<STRIP> &strip, vector<COMPARATOR> &comparator, 
+			vector<CSCIDLCTs> &idalcts,vector<CSCIDLCTs> &idalcts_emul, 
+			vector<CSCIDLCTs> &idclcts,vector<CSCIDLCTs> &idclcts_emul, 
+			vector<CSCIDLCTs> &idlcts,vector<CSCIDLCTs> &idlcts_emul, 
+			vector<CSCDetID> &usedChamber, int Run, int Event, bool addEmulation);
 bool ChamberUsedForEventDisplay(CSCDetID id, vector<CSCDetID> usedChamber);
 void SetSaveNameLegendName(TString& name, TString& legendName, TString address, CSCDetID id, int Run, int Event);
 void SaveUsedChamber(CSCDetID id, vector<int> layer_strip, vector<int> layer_wire, vector<int> layer_comparator, vector<CSCDetID> &usedChamber);
@@ -55,3 +60,4 @@ void SetEventDisplayLegend(TString legendName);
 void ComparatorDisplay(CSCDetID id, vector<int>& layer_comparator, vector<COMPARATOR>& comparator, TH2F* comparatorDis, TH2F* comparatorDis_text);
 void SetPlotDetail_StripHit(TGraph* stripHitDis);
 
+vector<CorrelatedLCT> findStubsInChamber(CSCDetID id, vector<CSCIDLCTs> alllcts);

@@ -25,10 +25,29 @@
 #include <fstream>
 #include <algorithm>
 #include "Rtypes.h"
-void WireStripDisplay(TString address, CSCDetID id, vector<WIRE> &wire, vector<STRIP> &strip, vector<COMPARATOR> &comparator, vector<CSCDetID> &usedChamber, int Run, int Event){
+
+vector<CorrelatedLCT> findStubsInChamber(CSCDetID id, vector<CSCIDLCTs> alllcts){
+   vector<CorrelatedLCT> lcts;
+   for (auto idlcts : alllcts){
+       if (idlcts.first == id){
+	   lcts = idlcts.second;
+	   break;
+       }
+   }
+  
+ return lcts;
+}
+
+
+void WireStripDisplay(TString address, CSCDetID id, vector<WIRE> &wire, vector<STRIP> &strip, vector<COMPARATOR> &comparator, 
+			 vector<CSCIDLCTs> &allalcts, vector<CSCIDLCTs> &allalcts_emul, 
+			 vector<CSCIDLCTs> &allclcts, vector<CSCIDLCTs> &allclcts_emul, 
+			 vector<CSCIDLCTs> &alllcts, vector<CSCIDLCTs> &alllcts_emul, 
+			 vector<CSCDetID> &usedChamber, int Run, int Event, bool addEmulation){
 
         gStyle->SetPalette(55);
 
+	
         TH2F* NWireGroup = new TH2F("NWireGroup", "NWireGroup", 4, 1, 5, 4, 1, 5);
         TH2F* NStrip = new TH2F("NStrip", "NStrip", 4, 1, 5, 4, 1, 5);
 
@@ -77,21 +96,22 @@ void WireStripDisplay(TString address, CSCDetID id, vector<WIRE> &wire, vector<S
               layer_strip.insert(layer_strip.end(),layer_strip_r4.begin(),layer_strip_r4.end());
               layer_comparator.insert(layer_comparator.end(),layer_comparator_r4.begin(),layer_comparator_r4.end());
               }
+	   
 
            const int nStrip = NStrip->GetBinContent(id.Station, id.Ring);
            const int nWireGroup = NWireGroup->GetBinContent(id.Station, id.Ring);
            const int nCFEB = nStrip/16;
 //draw event display
-           TCanvas *c1 = new TCanvas("c1", "", 0, 0, 2000, 1500);
+           TCanvas *c1 = new TCanvas("c1", "", 0, 0, 600, 800);
 
-           c1->Divide(1,3);
+           c1->Divide(1,4);
 
            c1->SetRightMargin(0.15);
            c1->SetBottomMargin(0.25);
            c1->SetTopMargin(0.25);
 //strip display
            c1->cd(3)->SetGridy();
-gPad->SetBottomMargin(0.15);
+gPad->SetBottomMargin(0.2);
            TH2F* stripDis = new TH2F("stripDis", "", nStrip*2+2, 1, nStrip+2, 6, 1, 7);
            TH2F* stripDis_text = new TH2F("stripDis_text", "", nStrip*2+2, 1, nStrip+2, 6, 0.5, 6.5);
            TH1F* cfebNotReadOut = new TH1F("cfebNotReadOut", "", nStrip+1, 1, nStrip+2);
@@ -102,12 +122,12 @@ gPad->SetBottomMargin(0.15);
            TH1F* cfebNotInstall_comparator_me21 = new TH1F("cfebNotInstall_comparator_me21", "", 162, 1, 163);
            TH1F* cfebNotInstall_comparator_me11 = new TH1F("cfebNotInstall_comparator_me11", "", 162, 1, 163);
 
-           TPaveText *pt3 = new TPaveText(0.4,0.95,0.6,0.99,"NDC");
+           TPaveText *pt3 = new TPaveText(0.4,0.90,0.6,0.96,"NDC");
 //           double cfeb[5] = {0, 0, 0, 0, 0};
            double cfeb[nCFEB] = {}; 
            StripDisplay(/*c1,*/ id, layer_strip, strip, cfeb, stripDis, stripDis_text, cfebNotReadOut, cfebNotInstall_me21, cfebNotInstall_me11);
            MakeShadeForComparatorPanel(cfebNotReadOut, cfebNotInstall_me21, cfebNotReadOut_comparator, cfebNotInstall_comparator_me21, cfebNotInstall_comparator_me11);
-           SetTitle(pt3, "Cathode Hit ADC Count");
+           SetTitle(pt3, "Strip Hits and ADC Count");
 
            stripDis->Draw("COLZ");
            stripDis_text->Draw("text same");
@@ -121,30 +141,33 @@ gPad->SetBottomMargin(0.15);
 
 //wire display
           c1->cd(1)->SetGridy();
-gPad->SetTopMargin(0.1);
-gPad->SetBottomMargin(0.15);
+gPad->SetTopMargin(0.15);
+gPad->SetBottomMargin(0.2);
           TH2F* wireDis = new TH2F("wireDis", "", nWireGroup, 1, nWireGroup+1, 6, 1, 7);
           TH2F* wireDis_text = new TH2F("wireDis_text", "", nWireGroup, 1, nWireGroup+1, 6, 1, 7);
-          TPaveText *pt1 = new TPaveText(0.4,.96,0.6,0.99, "NDC");
+          TPaveText *pt1 = new TPaveText(0.4,.90,0.6,0.96, "NDC");
 
           WireDisplay(id, layer_wire, wire, wireDis, wireDis_text);
-          SetTitle(pt1, "Anode Hit Timing");
+          SetTitle(pt1, "Anode Hits");
    
-          wireDis->Draw("COLZ");
+          wireDis->SetMarkerSize(2);
+          wireDis->Draw("COLZ text");
           wireDis_text->Draw("text same");
           pt1->Draw();
 //legend
-          SetEventDisplayLegend(legendName);
+//ignore here
+          //SetEventDisplayLegend(legendName);
 
 //comparator display
           c1->cd(2)->SetGridy();
-gPad->SetBottomMargin(0.15);
-          TPaveText *pt4 = new TPaveText(0.4,.95,0.6,0.99, "NDC");
+	  gPad->SetBottomMargin(0.2);
+          TPaveText *pt4 = new TPaveText(0.4,.90,0.6,0.96, "NDC");
          TH2F* comparatorDis = new TH2F("comparatorDis", "", nStrip*2+2, 1, nStrip*2+3, 6, 1, 7);
          TH2F* comparatorDis_text = new TH2F("comparatorDis_text", "", nStrip*2+2, 1, nStrip*2+3, 6, 1, 7);
 
           ComparatorDisplay(id, layer_comparator, comparator, comparatorDis, comparatorDis_text);
-          comparatorDis->Draw("COLZ");
+          comparatorDis->SetMarkerSize(2);
+          comparatorDis->Draw("COLZtext");
 
 //          cfebNotInstall->Draw("B same");
 //          cfebNotReadOut_comparator->Draw("B same");
@@ -155,8 +178,75 @@ gPad->SetBottomMargin(0.15);
                        cfebNotInstall_comparator_me11->Draw("B same");
                        }
 */
-          SetTitle(pt4, "Comparator Hit Timing");
+          SetTitle(pt4, "Comparator Hits");
           pt4->Draw();
+
+	  //show LCTs
+	   c1->cd(4);
+	  gPad->SetTopMargin(0.0);
+	  gPad->SetBottomMargin(0.0);
+	   vector<CorrelatedLCT> alcts = findStubsInChamber(id, allalcts);
+	   vector<CorrelatedLCT> clcts = findStubsInChamber(id, allclcts);
+	   vector<CorrelatedLCT> lcts = findStubsInChamber(id, alllcts);
+ 	  //chamber, run, event
+	  stringstream ss;
+	  ss <<"Chamber "<< (id.Endcap == 1 ? "+":"-") << id.Station <<"/"<< id.Ring <<"/"<< id.Chamber <<" ";
+	  ss <<" run: "<<  Run <<"  event #"<< Event;
+	  TPaveText * tex1 = new TPaveText(0.1, 0.0, 0.9, 1.0, "NDC");
+	  //tex1->SetTextFont(42);
+	  tex1->AddText(ss.str().c_str());
+	  stringstream ss_alcts[10];
+	  for (unsigned int ilct = 0; ilct < alcts.size(); ilct++){
+	      ss_alcts[ilct] <<"data #"<<ilct<<" ALCT keyWg "<< alcts[ilct].keyWG <<" Quality "<< alcts[ilct].quality <<" Pattern "<< alcts[ilct].pattern<<" bx "<<  alcts[ilct].BX;
+	      tex1->AddText(ss_alcts[ilct].str().c_str());
+	  }
+	  stringstream ss_clcts[10];
+	  for (unsigned int ilct = 0; ilct < clcts.size(); ilct++){
+	      ss_clcts[ilct] <<"data #"<<ilct<<" CLCT HS "<< clcts[ilct].keyStrip <<" Quality "<< clcts[ilct].quality <<" Pattern "<< clcts[ilct].pattern << " bx "<<  clcts[ilct].BX;
+	      tex1->AddText(ss_clcts[ilct].str().c_str());
+	  }
+	  stringstream ss_lcts[10];
+	  for (unsigned int ilct = 0; ilct < lcts.size(); ilct++){
+	      ss_lcts[ilct] <<"data #"<<ilct<<" LCT keyWg "<< lcts[ilct].keyWG <<" HS "<< lcts[ilct].keyStrip <<" Quality "<< lcts[ilct].quality <<" Pattern "<< lcts[ilct].pattern << " bx "<<  lcts[ilct].BX;
+	      tex1->AddText(ss_lcts[ilct].str().c_str());
+	  }
+	  if (addEmulation){
+	     vector<CorrelatedLCT> alcts_emul = findStubsInChamber(id, allalcts_emul);
+	     vector<CorrelatedLCT> clcts_emul = findStubsInChamber(id, allclcts_emul);
+	     vector<CorrelatedLCT> lcts_emul = findStubsInChamber(id, alllcts_emul);
+	     stringstream ss_alcts_emul[10];
+	     for (unsigned int ilct = 0; ilct < alcts_emul.size(); ilct++){
+	         ss_alcts_emul[ilct] <<"Emul #"<<ilct<<" ALCT keyWg "<< alcts_emul[ilct].keyWG <<" Quality "<< alcts_emul[ilct].quality <<" Pattern "<< alcts_emul[ilct].pattern<<" bx "<<  alcts_emul[ilct].BX;
+	         tex1->AddText(ss_alcts_emul[ilct].str().c_str());
+	     }
+	     stringstream ss_clcts_emul[10];
+	     for (unsigned int ilct = 0; ilct < clcts_emul.size(); ilct++){
+	         ss_clcts_emul[ilct] <<"Emul #"<<ilct<<" CLCT HS "<< clcts_emul[ilct].keyStrip <<" Quality "<< clcts_emul[ilct].quality <<" Pattern "<< clcts_emul[ilct].pattern << " bx "<< clcts_emul[ilct].BX;
+	         tex1->AddText(ss_clcts_emul[ilct].str().c_str());
+	     }
+	     stringstream ss_lcts_emul[10];
+	     for (unsigned int ilct = 0; ilct < lcts_emul.size(); ilct++){
+	         ss_lcts_emul[ilct] <<"Emul #"<<ilct<<" LCT keyWg "<< lcts_emul[ilct].keyWG <<" HS "<< lcts_emul[ilct].keyStrip <<" Quality "<< lcts_emul[ilct].quality <<" Pattern "<< lcts_emul[ilct].pattern << " bx "<<  lcts_emul[ilct].BX;
+	         tex1->AddText(ss_lcts_emul[ilct].str().c_str());
+	     }
+	  }
+        /*
+	  if (lcts.size() >= 1){
+	      stringstream ss_lct1;
+	      ss_lct1 <<"#1 LCT keyWg "<< lcts[0].keyWG <<" HS "<< lcts[0].keyStrip <<" Quality "<< lcts[0].quality <<" Pattern "<< lcts[0].pattern;
+	      tex1->AddText(ss_lct1.str().c_str());
+
+	  }
+	  if (lcts.size() >= 2){
+	      stringstream ss_lct2;
+	      ss_lct2 <<"#2 LCT keyWg "<< lcts[1].keyWG <<" HS "<< lcts[1].keyStrip <<" Quality "<< lcts[1].quality<<" Pattern "<< lcts[1].pattern;
+	      tex1->AddText(ss_lct2.str().c_str());
+	  }
+	  */
+	  tex1->Draw();
+
+	  
+
 //strip hit display
 /*          c1->cd(4)->SetGridy();
           gPad->SetBottomMargin(0.15);
@@ -199,6 +289,7 @@ gPad->SetBottomMargin(0.15);
           delete comparatorDis;
           delete comparatorDis_text;
           delete cfebNotReadOut;
+	  delete  tex1;
 }
 
 
