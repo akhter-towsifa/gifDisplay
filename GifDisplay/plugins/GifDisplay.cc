@@ -117,6 +117,7 @@
 
 //#include "Gif.h"
 #include "gifDisplay/GifDisplay/interface/display.h"
+//##include "../interface/display.h"
 // class declaration
 //
 

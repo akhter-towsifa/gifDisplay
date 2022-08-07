@@ -1,5 +1,5 @@
-//#ifndef gifDisplay_GifDisplay_display_h 
-//#define gifDisplay_GifDisplay_display_h 
+#ifndef gifDisplay_GifDisplay_display_h 
+#define gifDisplay_GifDisplay_display_h 
 
 
 #include "gifDisplay/GifDisplay/interface/structForDisplay.h"
