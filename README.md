@@ -1,10 +1,17 @@
 # gifDisplay
 
-original package:
-https://github.com/mhl0116/gifDisplay
 
 
-put this package under CMSSW_12_5_Z/src
+This packge is used to display CSC hits and CSC local track for CMS events from simulation or data
+
+## Setup
+```
+cmsrel CMSSW_12_5_0_pre2
+cd CMSSW_12_5_0_pre2/src
+git clone https://github.com/tahuang1991/gifDisplay.git
+scram b -j 9
+```
+## How to use CSC event display package 
 
 
  1. in CSCEventDisplay.py uses "process.source" to get input files.
@@ -16,5 +23,9 @@ put this package under CMSSW_12_5_Z/src
  1. save event and chamber id for which you want make eventdisplay for in eventList.txt 
    FORMAT: runNumber eventNumber endcapID stationID ringID chamberID (note: use ringID=1 for both ME11a and ME11b)
 
+
+## Reference
+original package:
+https://github.com/mhl0116/gifDisplay
 
 email hualin.mei@cern.ch if you have any suggestions or questions
