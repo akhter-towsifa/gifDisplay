@@ -5,6 +5,7 @@
 // user include files
 #include "FWCore/Framework/interface/Frameworkfwd.h"
 #include "FWCore/Framework/interface/one/EDAnalyzer.h"
+#include "FWCore/Framework/interface/ConsumesCollector.h"
 
 #include "FWCore/Framework/interface/Event.h"
 #include "FWCore/Framework/interface/MakerMacros.h"
@@ -115,7 +116,7 @@
 #include <fstream>
 
 //#include "Gif.h"
-#include "display.h"
+#include "gifDisplay/GifDisplay/interface/display.h"
 // class declaration
 //
 
@@ -155,6 +156,7 @@ class GifDisplay : public edm::one::EDAnalyzer<edm::one::SharedResources>  {
   edm::EDGetTokenT<CSCALCTDigiCollection> alctDigiTagSrc_emul;
   edm::EDGetTokenT<CSCCLCTDigiCollection> clctDigiTagSrc_emul;
   edm::EDGetTokenT<CSCCorrelatedLCTDigiCollection> corrlctDigiTagSrc_emul;
+  edm::ESGetToken<CSCGeometry, MuonGeometryRecord> cscToken_;
 
 //edm::InputTag compDigiTag;
 //edm::InputTag cscRecHitTag;
@@ -169,11 +171,13 @@ class GifDisplay : public edm::one::EDAnalyzer<edm::one::SharedResources>  {
 //std::string theRootFileName,pdf;
 std::string eventDisplayDir;
 std::vector<double> eventList;
+std::vector<int> runList;
 std::vector<int> endcapList;
 std::vector<int> stationList;
 std::vector<int> ringList;
 std::vector<int> chamberList;
 std::string eventlistFile;
+
 
 std::string chamberType;
 
@@ -226,6 +230,8 @@ fout->cd();
   chamberType = iConfig.getUntrackedParameter<std::string>("chamberType", "11");
   doDebug = iConfig.getUntrackedParameter<bool>("debug", false);
   addEmulation = iConfig.getUntrackedParameter<bool>("addEmulation", false);
+
+  cscToken_ = consumesCollector().esConsumes<CSCGeometry, MuonGeometryRecord>();
 }
 
 
@@ -258,7 +264,8 @@ int testR = 1;
 int testC = 21;
 
 edm::ESHandle<CSCGeometry> cscGeom;
-iSetup.get<MuonGeometryRecord>().get(cscGeom);
+cscGeom = &iSetup.getData(cscToken_);
+//iSetup.get<MuonGeometryRecord>().get(cscGeom);
 //edm::EventId evId=iEvent.id();
 //unsigned int time=iEvent.time().unixTime();
 
@@ -273,6 +280,7 @@ stationList.clear();
 ringList.clear();
 chamberList.clear();
 eventList.clear();
+runList.clear();
 
 vector<WIRE>   wire_container;
 vector<STRIP>  strip_container;
@@ -295,6 +303,9 @@ while (file)
      istringstream is(line);
      while (is) {
 
+           int run;
+           is >> run;
+
            double event;
            is >> event;
            eventList.push_back(event);
@@ -316,6 +327,7 @@ while (file)
   }
 
 
+if (find (runList.begin(), runList.end(), Run) == runList.end()) return;
 if (find (eventList.begin(), eventList.end(), Event) == eventList.end()) return;
 
 /*

@@ -1,4 +1,8 @@
-#include "structForDisplay.h"
+//#ifndef gifDisplay_GifDisplay_display_h 
+//#define gifDisplay_GifDisplay_display_h 
+
+
+#include "gifDisplay/GifDisplay/interface/structForDisplay.h"
 #include <TROOT.h>
 #include <TChain.h>
 #include <TFile.h>
@@ -61,3 +65,5 @@ void ComparatorDisplay(CSCDetID id, vector<int>& layer_comparator, vector<COMPAR
 void SetPlotDetail_StripHit(TGraph* stripHitDis);
 
 vector<CorrelatedLCT> findStubsInChamber(CSCDetID id, vector<CSCIDLCTs> alllcts);
+
+#endif

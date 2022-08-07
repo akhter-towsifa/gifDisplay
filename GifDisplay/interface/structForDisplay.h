@@ -1,3 +1,6 @@
+#ifndef gifDisplay_GifDisplay_structForDisplay_h 
+#define gifDisplay_GifDisplay_structForDisplay_h 
+
 #include <TROOT.h>
 #include <TChain.h>
 #include <TFile.h>
@@ -162,3 +165,6 @@ struct CorrelatedLCT{
   
   }
 };
+
+
+#endif

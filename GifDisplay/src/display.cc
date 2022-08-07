@@ -1,4 +1,4 @@
-#include "display.h"
+#include "gifDisplay/GifDisplay/interface/display.h"
 #define analysis_cxx
 //#include "analysis.h"
 #include <TH2.h>
