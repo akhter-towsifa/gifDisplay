@@ -1,30 +1,30 @@
 #include "gifDisplay/GifDisplay/interface/display.h"
-#define analysis_cxx
-//#include "analysis.h"
-#include <TH2.h>
-#include <TStyle.h>
-#include <TCanvas.h>
-#include <TGraph.h>
+
 #include <stdlib.h>     /* srand, rand */
 #include <time.h>       /* time */
-#include <TGraphErrors.h>
-#include "TMath.h"
-#include "TF1.h"
-#include "TPaveText.h"
-#include "TLegend.h"
-#include "TLorentzVector.h"
 #include <math.h>
-#define PI 3.14159265
 #include <vector>
 #include <list>
 #include <iterator>
 #include <boost/lexical_cast.hpp>
 #include <string>
-#include "TPaletteAxis.h"
 #include <iostream>
 #include <fstream>
 #include <algorithm>
 #include "Rtypes.h"
+
+#include "TF1.h"
+#include "TH2.h"
+#include "TStyle.h"
+#include "TCanvas.h"
+#include "TGraph.h"
+#include "TGraphErrors.h"
+#include "TPaletteAxis.h"
+#include "TMath.h"
+#include "TPaveText.h"
+#include "TLegend.h"
+#include "TLorentzVector.h"
+#define PI 3.14159265
 
 vector<CorrelatedLCT> findStubsInChamber(CSCDetID id, vector<CSCIDLCTs> alllcts){
    vector<CorrelatedLCT> lcts;
@@ -102,7 +102,7 @@ void WireStripDisplay(TString address, CSCDetID id, vector<WIRE> &wire, vector<S
            const int nWireGroup = NWireGroup->GetBinContent(id.Station, id.Ring);
            const int nCFEB = nStrip/16;
 //draw event display
-           TCanvas *c1 = new TCanvas("c1", "", 0, 0, 600, 800);
+           TCanvas *c1 = new TCanvas("c1", "c1", 0, 0, 600, 800);
 
            c1->Divide(1,4);
 
@@ -289,7 +289,7 @@ gPad->SetBottomMargin(0.2);
           delete comparatorDis;
           delete comparatorDis_text;
           delete cfebNotReadOut;
-	  delete  tex1;
+          delete  tex1;
 }
 
 
@@ -1031,17 +1031,17 @@ void WireDisplay(CSCDetID id, vector<int>& layer_wire, vector<WIRE>& wire, TH2F*
           wireDis->GetYaxis()->SetNdivisions(110);
 }
 
-void SetEventDisplayLegend(TString legendName){
+/*void SetEventDisplayLegend(TString legendName){
 
-          TLegend* leg = new TLegend(0.05, 0.95, .2, .99);
-          leg->AddEntry((TObject*)0, legendName, "");
+          TLegend* leg = new TLegend(0.05, 0.95, .2, .99, "","brNDC");
+          leg->AddEntry((TObject*)0, legendName, "lpf");
           leg->SetFillColor(0);
           leg->SetBorderSize(0);
           leg->SetTextSize(0.1);
           leg->Draw();
 
 
-}
+}*/
 
 
 void ComparatorDisplay(CSCDetID id, vector<int>& layer_comparator, vector<COMPARATOR>& comparator, TH2F* comparatorDis, TH2F* comparatorDis_text){

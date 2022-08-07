@@ -1,17 +1,10 @@
 #ifndef gifDisplay_GifDisplay_structForDisplay_h 
 #define gifDisplay_GifDisplay_structForDisplay_h 
 
-#include <TROOT.h>
-#include <TChain.h>
-#include <TFile.h>
 #include <iostream>
 #include <fstream>
 #include <list>
 #include <vector>
-#include "TF1.h"
-#include <TH2.h>
-#include <TGraph.h>
-#include "TPaveText.h"
 #include <iomanip>
 #include <ctime>
 #include <string>

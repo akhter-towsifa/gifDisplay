@@ -3,22 +3,21 @@
 
 
 #include "gifDisplay/GifDisplay/interface/structForDisplay.h"
-#include <TROOT.h>
-#include <TChain.h>
-#include <TFile.h>
 #include <iostream>
 #include <fstream>
 #include <list>
 #include <vector>
-#include "TF1.h"
-#include <TH2.h>
-#include <TGraph.h>
-#include "TPaveText.h"
 #include <iomanip>
 #include <ctime>
 #include <string>
 #include <cmath>
 
+#include "TF1.h"
+#include "TH2.h"
+#include "TString.h"
+#include "TPaveText.h"
+#include "TGraph.h"
+#define PI 3.14159265
 using namespace std;
 
 typedef pair<CSCDetID, vector<Wire> > WIRE;
@@ -60,7 +59,7 @@ bool CheckLeft(Strips &s, Strips &sL);
 template <class T>
 vector<int> FindChamberIndex(CSCDetID id, vector<T> &vec);
 void WireDisplay(CSCDetID id, vector<int>& layer_wire, vector<WIRE>& wire, TH2F* wireDis, TH2F* wireDis_text);
-void SetEventDisplayLegend(TString legendName);
+//void SetEventDisplayLegend(TString legendName);
 void ComparatorDisplay(CSCDetID id, vector<int>& layer_comparator, vector<COMPARATOR>& comparator, TH2F* comparatorDis, TH2F* comparatorDis_text);
 void SetPlotDetail_StripHit(TGraph* stripHitDis);
 
