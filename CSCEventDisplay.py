@@ -1,5 +1,7 @@
 import FWCore.ParameterSet.Config as cms
 from FWCore.ParameterSet.VarParsing import VarParsing
+from Configuration.Eras.Era_Run3_cff import Run3
+from Configuration.Eras.Era_Run2_2018_cff import Run2_2018
 
 import sys, os
 ### cmsRun CSCEventDisplay.py plotdir="/afs/cern.ch/work/t/tahuang/CSCEmulation/CMSSW_10_2_1/src/displayplots/"
@@ -7,6 +9,8 @@ options = VarParsing ('analysis')
 options.register('plotdir', '', mytype=VarParsing.varType.string)
 options.register("unpack", False, VarParsing.multiplicity.singleton, VarParsing.varType.bool,
                          "Set to True when you want to unpack the CSC DAQ data.")
+options.register("unpackGEM", False, VarParsing.multiplicity.singleton, VarParsing.varType.bool,
+                         "Set to True when you want to unpack the GEM DAQ data.")
 options.register("l1", False, VarParsing.multiplicity.singleton, VarParsing.varType.bool,
                          "Set to True when you want to re-emulate the CSC trigger primitives.")
 options.register("l1GEM", False, VarParsing.multiplicity.singleton, VarParsing.varType.bool,
@@ -35,28 +39,42 @@ options.register("runME11ILT", False, VarParsing.multiplicity.singleton, VarPars
                          "Set to True when running the GEM-CSC integrated local trigger algorithm in ME1/1.")
 options.register("runME21ILT", False, VarParsing.multiplicity.singleton, VarParsing.varType.bool,
                          "Set to True when running the GEM-CSC integrated local trigger algorithm in ME2/1.")
-options.register("saveEdmOutput", True, VarParsing.multiplicity.singleton, VarParsing.varType.bool,
-                         "Set to True if you want to keep the EDM ROOT after unpacking and re-emulating.")
 options.register("preTriggerAnalysis", False, VarParsing.multiplicity.singleton, VarParsing.varType.bool,
                          "Set to True if you want to print out more details about CLCTs and LCTs in the offline CSC DQM module.")
+options.register("dropNonMuonCollections", True, VarParsing.multiplicity.singleton, VarParsing.varType.bool,
+                 "Option to drop most non-muon collections generally considered unnecessary for GEM/CSC analysis")
+options.register("dqmOutputFile", "step_DQM.root", VarParsing.multiplicity.singleton, VarParsing.varType.string,
+                 "Name of the DQM output file. Default: step_DQM.root")
 options.parseArguments()
+process_era = Run3
+if not options.run3:
+          process_era = Run2_2018
 from Configuration.StandardSequences.Eras import eras
-process = cms.Process("GifDisplay", eras.Run2_2018)
+process = cms.Process("CSCDisplay", process_era)
 
 process.load('Configuration.StandardSequences.GeometryRecoDB_cff')
 #process.load("Configuration/Geometry/GeometryIdeal2015Reco_cff")
 #process.load("Configuration/Geometry/IdealGeometry_cff")
 #process.load("Configuration/StandardSequences/Geometry_cff")
 process.load("Configuration/StandardSequences/MagneticField_cff")
-process.load('Configuration.StandardSequences.FrontierConditions_GlobalTag_condDBv2_cff')
-process.load("Configuration/StandardSequences/RawToDigi_Data_cff")
+process.load("Configuration/StandardSequences/FrontierConditions_GlobalTag_cff")
+#process.load('Configuration.StandardSequences.FrontierConditions_GlobalTag_condDBv2_cff')
+#process.load("Configuration/StandardSequences/RawToDigi_Data_cff")
 process.load("Configuration.StandardSequences.Reconstruction_cff")
 process.load("RecoMuon.MuonSeedGenerator.standAloneMuonSeeds_cff")
 #process.load("RecoMuon.GlobalMuonProducer.globalMuons_cff")
+process.load('Configuration.StandardSequences.DQMSaverAtRunEnd_cff')
+process.load('Configuration.StandardSequences.EndOfProcess_cff')
+process.load('Configuration.EventContent.EventContent_cff')
+process.load("EventFilter.CSCRawToDigi.cscUnpacker_cfi")
+process.load('EventFilter.GEMRawToDigi.muonGEMDigis_cfi')
+process.load('EventFilter.L1TRawToDigi.emtfStage2Digis_cfi')
+process.load("L1Trigger.CSCTriggerPrimitives.cscTriggerPrimitiveDigis_cfi")
+process.load("CalibMuon.CSCCalibration.CSCL1TPLookupTableEP_cff")
+process.load('L1Trigger.L1TGEM.simGEMDigis_cff')
+process.load("DQM.L1TMonitor.L1TdeCSCTPG_cfi")
+process.load("DQM.L1TMonitor.L1TdeGEMTPG_cfi")
 
-#process.GlobalTag.globaltag = '74X_dataRun2_Prompt_v0'
-#process.GlobalTag.globaltag = '92X_dataRun2_Prompt_v11'
-process.GlobalTag.globaltag = '102X_dataRun2_Prompt_v1'
 
 process.options = cms.untracked.PSet(
 	SkipEvent = cms.untracked.vstring('LogicError','ProductNotFound')
@@ -88,11 +106,16 @@ from Configuration.AlCa.GlobalTag import GlobalTag
 if options.mc:
       process.GlobalTag = GlobalTag(process.GlobalTag, 'auto:run2_mc', '')
       if options.run3:
-            process.GlobalTag = GlobalTag(process.GlobalTag, 'auto:phase1_2021_realistic', '')
+            #process.GlobalTag = GlobalTag(process.GlobalTag, 'auto:phase1_2021_realistic', '')
+            process.GlobalTag = GlobalTag(process.GlobalTag, '123X_mcRun3_2021_realistic_v14', '')
 else:
       process.GlobalTag = GlobalTag(process.GlobalTag, 'auto:run2_data', '')
       if options.run3:
             process.GlobalTag = GlobalTag(process.GlobalTag, '112X_dataRun3_Prompt_v5', '')
+
+#process.GlobalTag.globaltag = '74X_dataRun2_Prompt_v0'
+#process.GlobalTag.globaltag = '92X_dataRun2_Prompt_v11'
+#process.GlobalTag.globaltag = '102X_dataRun2_Prompt_v1'
 
 ## running on unpacked data, or after running the unpacker
 if not options.mc or options.unpack:
@@ -150,6 +173,43 @@ if options.dqmGEM:
       ## GEM pad clusters from the GEM TPG
       process.l1tdeGEMTPG.emul = "simMuonGEMPadDigiClusters"
 
+
+# Output
+process.output = cms.OutputModule(
+    "PoolOutputModule",
+      outputCommands = cms.untracked.vstring(
+            ['keep *',
+             'drop *_rawDataCollector_*_*',
+      ]),
+      fileName = cms.untracked.string("lcts2.root"),
+)
+
+## for most studies, you don't need these collections.
+## adjust as necessary
+if options.dropNonMuonCollections:
+      outputCom = process.output.outputCommands
+      outputCom.append('drop *_rawDataCollector_*_*')
+      outputCom.append('drop *_sim*al*_*_*')
+      outputCom.append('drop *_hlt*al*_*_*')
+      outputCom.append('drop *_g4SimHits_*al*_*')
+      outputCom.append('drop *_simSi*_*_*')
+      outputCom.append('drop *_hltSi*_*_*')
+      outputCom.append('drop *_simBmtfDigis_*_*')
+      outputCom.append('drop *_*_*BMTF*_*')
+      outputCom.append('drop *_hltGtStage2ObjectMap_*_*')
+      outputCom.append('drop *_simGtStage2Digis_*_*')
+      outputCom.append('drop *_hltTriggerSummary*_*_*')
+
+## DQM output
+process.DQMoutput = cms.OutputModule("DQMRootOutputModule",
+    dataset = cms.untracked.PSet(
+        dataTier = cms.untracked.string('DQMIO'),
+        filterName = cms.untracked.string('')
+    ),
+    fileName = cms.untracked.string('file:{}'.format(options.dqmOutputFile)),
+    outputCommands = process.DQMEventContent.outputCommands,
+    splitLevel = cms.untracked.int32(0)
+)
 
 ## helper for files on dCache/EOS (LPC)
 #def useInputDir(process, inputDir, onEOS = True):
@@ -221,20 +281,18 @@ process.GifDisplay = cms.EDAnalyzer('GifDisplay',
 #rootFileName = cms.untracked.string("output_me11_test27_oct30.root"),
 rootFileName = cms.untracked.string("output.root"),
 
-stripDigiTagSrc = cms.untracked.InputTag("muonCSCDigis","MuonCSCStripDigi"),
-wireDigiTagSrc = cms.untracked.InputTag("muonCSCDigis","MuonCSCWireDigi"),
-compDigiTagSrc = cms.untracked.InputTag("muonCSCDigis", "MuonCSCComparatorDigi"),
 #cscRecHitTag = cms.InputTag("csc2DRecHits",""),
-#alctDigiTag = cms.InputTag('muonCSCDigis', 'MuonCSCALCTDigi'),
-alctDigiTagSrc = cms.untracked.InputTag('muonCSCDigis', 'MuonCSCALCTDigi'),
-alctDigiTagSrc_Emul = cms.untracked.InputTag('cscTriggerPrimitiveDigis'),
-clctDigiTagSrc = cms.untracked.InputTag('muonCSCDigis', 'MuonCSCCLCTDigi'),
-clctDigiTagSrc_Emul = cms.untracked.InputTag('cscTriggerPrimitiveDigis'),
-#corrlctDigiTag = cms.InputTag('muonCSCDigis', 'MuonCSCCorrelatedLCTDigi'),
-corrlctDigiTagSrc = cms.untracked.InputTag('muonCSCDigis', 'MuonCSCCorrelatedLCTDigi'),
+stripDigiTagSrc        = cms.untracked.InputTag("muonCSCDigis","MuonCSCStripDigi"),
+wireDigiTagSrc         = cms.untracked.InputTag("muonCSCDigis","MuonCSCWireDigi"),
+compDigiTagSrc         = cms.untracked.InputTag("muonCSCDigis", "MuonCSCComparatorDigi"),
+alctDigiTagSrc         = cms.untracked.InputTag('muonCSCDigis', 'MuonCSCALCTDigi'),
+clctDigiTagSrc         = cms.untracked.InputTag('muonCSCDigis', 'MuonCSCCLCTDigi'),
+corrlctDigiTagSrc      = cms.untracked.InputTag('muonCSCDigis', 'MuonCSCCorrelatedLCTDigi'),
+alctDigiTagSrc_Emul    = cms.untracked.InputTag('cscTriggerPrimitiveDigis'),
+clctDigiTagSrc_Emul    = cms.untracked.InputTag('cscTriggerPrimitiveDigis'),
 corrlctDigiTagSrc_Emul = cms.untracked.InputTag('cscTriggerPrimitiveDigis'),
 
-addEmulation = cms.untracked.bool(True),
+addEmulation = cms.untracked.bool(options.l1 or options.l1GEM),
 debug = cms.untracked.bool(False),
 #directory for eventdisplay
 eventDisplayDir = cms.untracked.string(options.plotdir),
@@ -272,7 +330,6 @@ if options.dqmGEM:
 process.p3 = cms.Path(process.dqmsequence)
 
 process.p4 = cms.EndPath(process.DQMoutput)
-process.p5 = cms.EndPath(process.output)
 process.p6 = cms.EndPath(process.endOfProcess)
 
 process.schedule = cms.Schedule()
@@ -292,7 +349,5 @@ process.schedule.extend([process.display])
 if options.dqm:
       process.schedule.extend([process.p3, process.p4])
 
-if options.saveEdmOutput:
-      process.schedule.extend([process.p5])
-
 process.schedule.extend([process.p6])
+print("All scheduled processes: ", process.schedule)

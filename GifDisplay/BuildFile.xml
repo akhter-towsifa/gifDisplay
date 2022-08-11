@@ -1,4 +1,6 @@
 <use   name="boost"/>
+<use   name="root"/>
+<use   name="rootgpad"/>
 <use   name="DataFormats/MuonDetId"/>
 <use   name="DataFormats/GEMDigi"/>
 <use   name="DataFormats/RPCDigi"/>
@@ -26,7 +28,6 @@
 <use   name="CommonTools/UtilAlgos"/>
 <use   name="RecoMuon/TrackingTools"/>
 <use   name="Utilities/General"/>
-
 <export>
   <lib   name="1"/>
 </export>

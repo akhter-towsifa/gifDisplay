@@ -23,7 +23,11 @@ scram b -j 9
  
  1. save event and chamber id for which you want make eventdisplay for in eventList.txt 
    FORMAT: runNumber eventNumber endcapID stationID ringID chamberID (note: use ringID=1 for both ME11a and ME11b)
+## Examples to run CSC display
 
+>```
+>cmsRun CSCEventDisplay.py mc=true l1=true run3=true runCCLUTOTMB=true  inputFiles=file:/afs/cern.ch/user/t/tahuang/public/RelValSample1000GeVTest/27a95851-6358-485b-b15b-619f3404d795.root  plotdir="/afs/cern.ch/work/t/tahuang/CSCEmulation/CMSSW_12_5_0_pre2/src/gifDisplay/displayplots/"
+>```
 
 ## Reference
 original package:
