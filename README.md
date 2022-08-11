@@ -26,9 +26,9 @@ scram b -j 9
 ## Examples to run CSC display
 
 >```
->cmsRun CSCEventDisplay.py mc=true l1=true run3=true runCCLUTOTMB=true  inputFiles=file:/afs/cern.ch/user/t/tahuang/public/RelValSample1000GeVTest/27a95851-6358-485b-b15b-619f3404d795.root  plotdir="/afs/cern.ch/work/t/tahuang/CSCEmulation/CMSSW_12_5_0_pre2/src/gifDisplay/displayplots/"
+>runDisplay.sh
 >```
-
+Make sure that sample path and plot directory are replaced with yours
 ## Reference
 original package:
 https://github.com/mhl0116/gifDisplay

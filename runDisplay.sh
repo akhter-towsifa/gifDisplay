@@ -1,1 +1,1 @@
-cmsRun gifDisplay.py plotdir="/home/mhl/public_html/2018/20180226_display"
+cmsRun CSCEventDisplay.py mc=true l1=true run3=true runCCLUTOTMB=true saveEdmOutput=false inputFiles=file:/afs/cern.ch/user/t/tahuang/public/RelValSample1000GeVTest/27a95851-6358-485b-b15b-619f3404d795.root  plotdir="/eos/user/t/tahuang/CSCEmulation/TeVMuon_CSCdisplay_202208/"

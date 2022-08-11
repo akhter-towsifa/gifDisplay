@@ -109,9 +109,52 @@ void WireStripDisplay(TString address, CSCDetID id, vector<WIRE> &wire, vector<S
            c1->SetRightMargin(0.15);
            c1->SetBottomMargin(0.25);
            c1->SetTopMargin(0.25);
+
+//wire display
+          c1->cd(1)->SetGridy();
+          gPad->SetTopMargin(0.15);
+          gPad->SetBottomMargin(0.2);
+          TH2F* wireDis = new TH2F("wireDis", "", nWireGroup, 1, nWireGroup+1, 6, 1, 7);
+          TH2F* wireDis_text = new TH2F("wireDis_text", "", nWireGroup, 1, nWireGroup+1, 6, 1, 7);
+          TPaveText *pt1 = new TPaveText(0.4,.90,0.6,0.96, "NDC");
+
+          WireDisplay(id, layer_wire, wire, wireDis, wireDis_text);
+          SetTitle(pt1, "Anode Hits");
+   
+          wireDis->SetMarkerSize(2);
+          wireDis->Draw("COLZ text");
+          wireDis_text->Draw("text same");
+          pt1->Draw();
+//legend
+//ignore here
+          //SetEventDisplayLegend(legendName);
+
+//comparator display
+          c1->cd(2)->SetGridy();
+	      gPad->SetBottomMargin(0.2);
+          TPaveText *pt4 = new TPaveText(0.4,.90,0.6,0.96, "NDC");
+          TH2F* comparatorDis = new TH2F("comparatorDis", "", nStrip*2+2, 1, nStrip*2+3, 6, 1, 7);
+          TH2F* comparatorDis_text = new TH2F("comparatorDis_text", "", nStrip*2+2, 1, nStrip*2+3, 6, 1, 7);
+
+          ComparatorDisplay(id, layer_comparator, comparator, comparatorDis, comparatorDis_text);
+          comparatorDis->SetMarkerSize(2);
+          comparatorDis->Draw("COLZtext");
+
+//          cfebNotInstall->Draw("B same");
+//          cfebNotReadOut_comparator->Draw("B same");
+/*
+          if (id.Station == 2) {
+             cfebNotInstall_comparator_me21->Draw("B same");
+             } else if (id.Station == 1) {
+                       cfebNotInstall_comparator_me11->Draw("B same");
+                       }
+*/
+          SetTitle(pt4, "Comparator Hits");
+          pt4->Draw();
+
 //strip display
            c1->cd(3)->SetGridy();
-gPad->SetBottomMargin(0.2);
+           gPad->SetBottomMargin(0.2);
            TH2F* stripDis = new TH2F("stripDis", "", nStrip*2+2, 1, nStrip+2, 6, 1, 7);
            TH2F* stripDis_text = new TH2F("stripDis_text", "", nStrip*2+2, 1, nStrip+2, 6, 0.5, 6.5);
            TH1F* cfebNotReadOut = new TH1F("cfebNotReadOut", "", nStrip+1, 1, nStrip+2);
@@ -139,47 +182,6 @@ gPad->SetBottomMargin(0.2);
                         }
            pt3->Draw();
 
-//wire display
-          c1->cd(1)->SetGridy();
-gPad->SetTopMargin(0.15);
-gPad->SetBottomMargin(0.2);
-          TH2F* wireDis = new TH2F("wireDis", "", nWireGroup, 1, nWireGroup+1, 6, 1, 7);
-          TH2F* wireDis_text = new TH2F("wireDis_text", "", nWireGroup, 1, nWireGroup+1, 6, 1, 7);
-          TPaveText *pt1 = new TPaveText(0.4,.90,0.6,0.96, "NDC");
-
-          WireDisplay(id, layer_wire, wire, wireDis, wireDis_text);
-          SetTitle(pt1, "Anode Hits");
-   
-          wireDis->SetMarkerSize(2);
-          wireDis->Draw("COLZ text");
-          wireDis_text->Draw("text same");
-          pt1->Draw();
-//legend
-//ignore here
-          //SetEventDisplayLegend(legendName);
-
-//comparator display
-          c1->cd(2)->SetGridy();
-	  gPad->SetBottomMargin(0.2);
-          TPaveText *pt4 = new TPaveText(0.4,.90,0.6,0.96, "NDC");
-         TH2F* comparatorDis = new TH2F("comparatorDis", "", nStrip*2+2, 1, nStrip*2+3, 6, 1, 7);
-         TH2F* comparatorDis_text = new TH2F("comparatorDis_text", "", nStrip*2+2, 1, nStrip*2+3, 6, 1, 7);
-
-          ComparatorDisplay(id, layer_comparator, comparator, comparatorDis, comparatorDis_text);
-          comparatorDis->SetMarkerSize(2);
-          comparatorDis->Draw("COLZtext");
-
-//          cfebNotInstall->Draw("B same");
-//          cfebNotReadOut_comparator->Draw("B same");
-/*
-          if (id.Station == 2) {
-             cfebNotInstall_comparator_me21->Draw("B same");
-             } else if (id.Station == 1) {
-                       cfebNotInstall_comparator_me11->Draw("B same");
-                       }
-*/
-          SetTitle(pt4, "Comparator Hits");
-          pt4->Draw();
 
 	  //show LCTs
 	   c1->cd(4);

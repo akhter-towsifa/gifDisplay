@@ -45,6 +45,8 @@ options.register("dropNonMuonCollections", True, VarParsing.multiplicity.singlet
                  "Option to drop most non-muon collections generally considered unnecessary for GEM/CSC analysis")
 options.register("dqmOutputFile", "step_DQM.root", VarParsing.multiplicity.singleton, VarParsing.varType.string,
                  "Name of the DQM output file. Default: step_DQM.root")
+options.register("saveEdmOutput", True, VarParsing.multiplicity.singleton, VarParsing.varType.bool,
+                 "Set to True if you want to keep the EDM ROOT after unpacking and re-emulating.")
 options.parseArguments()
 process_era = Run3
 if not options.run3:
@@ -153,6 +155,25 @@ if options.l1:
 if options.l1GEM:
       process.simMuonGEMPadDigis.InputCollection = 'muonGEMDigis'
 
+#####Run2 emulator 
+process.simCscTriggerPrimitiveDigisRun2 = process.cscTriggerPrimitiveDigis.clone()
+process.simCscTriggerPrimitiveDigisRun2.commonParam.runME11Up = cms.bool(False)
+process.simCscTriggerPrimitiveDigisRun2.commonParam.runME21Up = cms.bool(False)
+process.simCscTriggerPrimitiveDigisRun2.commonParam.runME31Up = cms.bool(False)
+process.simCscTriggerPrimitiveDigisRun2.commonParam.runME41Up = cms.bool(False)
+process.simCscTriggerPrimitiveDigisRun2.commonParam.runCCLUT = cms.bool(False)
+process.simCscTriggerPrimitiveDigisRun2.commonParam.runCCLUT_OTMB = cms.bool(False)
+process.simCscTriggerPrimitiveDigisRun2.commonParam.runCCLUT_TMB = cms.bool(False)
+process.simCscTriggerPrimitiveDigisRun2.commonParam.runME11ILT = False
+process.simCscTriggerPrimitiveDigisRun2.commonParam.run3 = False
+process.simCscTriggerPrimitiveDigisRun2.commonParam.runPhase2 = False
+process.simCscTriggerPrimitiveDigisRun2.clctPhase1.verbosity = cms.int32(0)
+process.simCscTriggerPrimitiveDigisRun2.alctPhase1.verbosity = cms.int32(0)
+process.simCscTriggerPrimitiveDigisRun2.tmbPhase1.verbosity = cms.int32(0)
+print("Run2 emulation, common parameter ", process.simCscTriggerPrimitiveDigisRun2.commonParam)
+print("Run2 emulation, CLCT parameter ", process.simCscTriggerPrimitiveDigisRun2.clctPhase1)
+process.simCscTriggerPrimitiveDigisRun2.commonParam.GEMPadDigiClusterProducer = cms.InputTag("simMuonGEMPadDigiClusters")
+
 ## DQM monitor
 if options.dqm:
       process.l1tdeCSCTPG.useB904ME11 = options.useB904ME11
@@ -181,7 +202,7 @@ process.output = cms.OutputModule(
             ['keep *',
              'drop *_rawDataCollector_*_*',
       ]),
-      fileName = cms.untracked.string("lcts2.root"),
+      fileName = cms.untracked.string("cscdisplay_edmout.root"),
 )
 
 ## for most studies, you don't need these collections.
@@ -249,34 +270,39 @@ eventlist_display = "eventList.txt"
 fevents = open(eventlist_display, 'r')
 
 totEvents = 0
+evlist = []
 for line in fevents:
    runnumber = int(line.split()[0])
    eventnumber = int(line.split()[1])
+   run_event_str = "%d:%d"%(runnumber, eventnumber)
+   if run_event_str not in evlist:
+       evlist.append(run_event_str)
+   else: continue
    process.source.eventsToProcess.append('%d:%d-%d:%d'%(runnumber, eventnumber, runnumber, eventnumber))
    totEvents = totEvents+1
-   #print "run ",runnumber, "eventnumber ",eventnumber
-
+   #print("run ",runnumber, "eventnumber ",eventnumber)
+print("Events to run ", process.source.eventsToProcess)
 process.maxEvents.input = totEvents
 
-##process.source.duplicateCheckMode = cms.untracked.string('noDuplicateCheck')
-###scram b -j8 USER_CXXFLAGS="-DEDM_ML_DEBUG"
-#process.MessageLogger = cms.Service("MessageLogger",
-#    destinations = cms.untracked.vstring("displaydebug"),
-#    displaydebug = cms.untracked.PSet(
-#        extension = cms.untracked.string(".txt"),
-#        threshold = cms.untracked.string("DEBUG"),
-#        lineLength = cms.untracked.int32(132),
-#        noLineBreaks = cms.untracked.bool(True)
-#    ),
-#    # debugModules = cms.untracked.vstring("*")
-#    debugModules = cms.untracked.vstring("cscTriggerPrimitiveDigis")
-#)
+#process.source.duplicateCheckMode = cms.untracked.string('noDuplicateCheck')
+##scram b -j8 USER_CXXFLAGS="-DEDM_ML_DEBUG"
+process.MessageLogger = cms.Service("MessageLogger",
+    destinations = cms.untracked.vstring("displaydebug"),
+    displaydebug = cms.untracked.PSet(
+        extension = cms.untracked.string(".txt"),
+        threshold = cms.untracked.string("DEBUG"),
+        lineLength = cms.untracked.int32(132),
+        noLineBreaks = cms.untracked.bool(True)
+    ),
+    # debugModules = cms.untracked.vstring("*")
+    debugModules = cms.untracked.vstring("cscTriggerPrimitiveDigis")
+)
 
 
 
 # CSC Trigger Primitives reader
 
-
+processName = process._Process__name
 process.GifDisplay = cms.EDAnalyzer('GifDisplay',
 #rootFileName = cms.untracked.string("output_me11_test27_oct30.root"),
 rootFileName = cms.untracked.string("output.root"),
@@ -293,7 +319,7 @@ clctDigiTagSrc_Emul    = cms.untracked.InputTag('cscTriggerPrimitiveDigis'),
 corrlctDigiTagSrc_Emul = cms.untracked.InputTag('cscTriggerPrimitiveDigis'),
 
 addEmulation = cms.untracked.bool(options.l1 or options.l1GEM),
-debug = cms.untracked.bool(True),
+debug = cms.untracked.int32(2),
 #directory for eventdisplay
 eventDisplayDir = cms.untracked.string(options.plotdir),
 #eventDisplayDir = cms.untracked.string("/home/mhl/public_html/2017/20171201_cscSeg/"),
@@ -301,6 +327,19 @@ eventDisplayDir = cms.untracked.string(options.plotdir),
 chamberType = cms.untracked.string('11')
 )
 
+if options.mc:
+    process.GifDisplay.stripDigiTagSrc        = cms.untracked.InputTag("simMuonCSCDigis", "MuonCSCStripDigi")
+    process.GifDisplay.wireDigiTagSrc         = cms.untracked.InputTag("simMuonCSCDigis", "MuonCSCWireDigi")
+    process.GifDisplay.compDigiTagSrc         = cms.untracked.InputTag("simMuonCSCDigis", "MuonCSCComparatorDigi")
+    #process.GifDisplay.alctDigiTagSrc         = cms.untracked.InputTag('simCscTriggerPrimitiveDigis', '')
+    #process.GifDisplay.clctDigiTagSrc         = cms.untracked.InputTag('simCscTriggerPrimitiveDigis', '')
+    #process.GifDisplay.corrlctDigiTagSrc      = cms.untracked.InputTag('simCscTriggerPrimitiveDigis', '')
+    process.GifDisplay.alctDigiTagSrc         = cms.untracked.InputTag('simCscTriggerPrimitiveDigisRun2', '', processName)
+    process.GifDisplay.clctDigiTagSrc         = cms.untracked.InputTag('simCscTriggerPrimitiveDigisRun2', '', processName)
+    process.GifDisplay.corrlctDigiTagSrc      = cms.untracked.InputTag('simCscTriggerPrimitiveDigisRun2', '', processName)
+    process.GifDisplay.alctDigiTagSrc_Emul    = cms.untracked.InputTag('cscTriggerPrimitiveDigis', "",processName)
+    process.GifDisplay.clctDigiTagSrc_Emul    = cms.untracked.InputTag('cscTriggerPrimitiveDigis', "",processName)
+    process.GifDisplay.corrlctDigiTagSrc_Emul = cms.untracked.InputTag('cscTriggerPrimitiveDigis', "",processName)
 
 #process.p = cms.Path(process.muonCSCDigis * process.cscTriggerPrimitiveDigis * process.GifDisplay)
 process.display = cms.Path(process.GifDisplay)
@@ -316,12 +355,20 @@ if options.unpackGEM:
             process.unpacksequence += process.emtfStage2Digis
 process.p1 = cms.Path(process.unpacksequence)
 
-process.l1sequence = cms.Sequence(l1csc)
-if options.l1GEM:
-      ## not sure if append would work for the GEM-CSC trigger
-      ## maybe the modules need to come first
-      process.l1sequence += process.simMuonGEMPadDigis
-      process.l1sequence += process.simMuonGEMPadDigiClusters
+#process.l1sequence = cms.Sequence(l1csc)
+#if options.l1GEM:
+#      ## not sure if append would work for the GEM-CSC trigger
+#      ## maybe the modules need to come first
+#      process.l1sequence += process.simMuonGEMPadDigis
+#      process.l1sequence += process.simMuonGEMPadDigiClusters
+#redefine the l1 sequence 
+process.l1sequence = cms.Sequence(
+        process.simMuonGEMPadDigis *
+        process.simMuonGEMPadDigiClusters *
+        l1csc *
+        process.simCscTriggerPrimitiveDigisRun2
+        )
+
 process.p2 = cms.Path(process.l1sequence)
 
 process.dqmsequence = cms.Sequence(process.l1tdeCSCTPG)
@@ -330,6 +377,7 @@ if options.dqmGEM:
 process.p3 = cms.Path(process.dqmsequence)
 
 process.p4 = cms.EndPath(process.DQMoutput)
+process.p5 = cms.EndPath(process.output)
 process.p6 = cms.EndPath(process.endOfProcess)
 
 process.schedule = cms.Schedule()
@@ -348,6 +396,8 @@ process.schedule.extend([process.display])
 ## add DQM step 1
 if options.dqm:
       process.schedule.extend([process.p3, process.p4])
+if options.saveEdmOutput:
+      process.schedule.extend([process.p5])
 
 process.schedule.extend([process.p6])
 print("All scheduled processes: ", process.schedule)
