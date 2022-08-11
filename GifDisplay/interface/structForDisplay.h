@@ -68,6 +68,12 @@ struct CSCDetID{
                 this->Chamber = 0.0;
                 this->Layer = 0.0;
         }
+        friend ostream& operator << (ostream& os, const CSCDetID& id)
+        {
+                os << "E:" << id.Endcap <<" S:"<< id.Station <<" R:"<<id.Ring <<" Chamber:"<<id.Chamber <<" layer:"<<id.Layer;
+                return os;
+        }
+
 };
 
 struct  Wire{

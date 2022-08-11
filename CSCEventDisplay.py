@@ -258,19 +258,19 @@ for line in fevents:
 
 process.maxEvents.input = totEvents
 
-#process.source.duplicateCheckMode = cms.untracked.string('noDuplicateCheck')
-##scram b -j8 USER_CXXFLAGS="-DEDM_ML_DEBUG"
-process.MessageLogger = cms.Service("MessageLogger",
-    destinations = cms.untracked.vstring("displaydebug"),
-    displaydebug = cms.untracked.PSet(
-        extension = cms.untracked.string(".txt"),
-        threshold = cms.untracked.string("DEBUG"),
-        lineLength = cms.untracked.int32(132),
-        noLineBreaks = cms.untracked.bool(True)
-    ),
-    # debugModules = cms.untracked.vstring("*")
-    debugModules = cms.untracked.vstring("cscTriggerPrimitiveDigis")
-)
+##process.source.duplicateCheckMode = cms.untracked.string('noDuplicateCheck')
+###scram b -j8 USER_CXXFLAGS="-DEDM_ML_DEBUG"
+#process.MessageLogger = cms.Service("MessageLogger",
+#    destinations = cms.untracked.vstring("displaydebug"),
+#    displaydebug = cms.untracked.PSet(
+#        extension = cms.untracked.string(".txt"),
+#        threshold = cms.untracked.string("DEBUG"),
+#        lineLength = cms.untracked.int32(132),
+#        noLineBreaks = cms.untracked.bool(True)
+#    ),
+#    # debugModules = cms.untracked.vstring("*")
+#    debugModules = cms.untracked.vstring("cscTriggerPrimitiveDigis")
+#)
 
 
 
@@ -293,7 +293,7 @@ clctDigiTagSrc_Emul    = cms.untracked.InputTag('cscTriggerPrimitiveDigis'),
 corrlctDigiTagSrc_Emul = cms.untracked.InputTag('cscTriggerPrimitiveDigis'),
 
 addEmulation = cms.untracked.bool(options.l1 or options.l1GEM),
-debug = cms.untracked.bool(False),
+debug = cms.untracked.bool(True),
 #directory for eventdisplay
 eventDisplayDir = cms.untracked.string(options.plotdir),
 #eventDisplayDir = cms.untracked.string("/home/mhl/public_html/2017/20171201_cscSeg/"),

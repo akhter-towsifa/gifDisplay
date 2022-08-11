@@ -233,6 +233,52 @@ fout->cd();
   addEmulation = iConfig.getUntrackedParameter<bool>("addEmulation", false);
 
   cscToken_ = consumesCollector().esConsumes<CSCGeometry, MuonGeometryRecord>();
+
+
+//vector<CSCDetID> chamberList;
+//chamberList.clear();
+endcapList.clear();
+stationList.clear();
+ringList.clear();
+chamberList.clear();
+eventList.clear();
+runList.clear();
+//==========================Get event list for display================
+ifstream file(eventlistFile);
+while (file)
+ {
+     string line;
+     if (not getline(file, line)) break;
+     istringstream is(line);
+     //while (is) {
+
+           int run;
+           is >> run;
+           runList.push_back(run);
+
+           double event;
+           is >> event;
+           eventList.push_back(event);
+
+           int endcap; is >> endcap;
+           endcapList.push_back(endcap);
+
+           int station; is >> station;
+           stationList.push_back(station);
+
+           int ring; is >> ring;
+           ringList.push_back(ring);
+
+           int chamber; is >> chamber;
+           chamberList.push_back(chamber);
+           if (doDebug)
+               cout <<"Eventlist: run "<< run <<" event "<< event <<" endcap "<< endcap <<" station "<< station << " ring "<< ring <<" chamber "<< chamber << endl;
+
+           //}
+
+  }
+
+
 }
 
 
@@ -274,15 +320,6 @@ double Run,Event;
 Run = iEvent.id().run();
 Event = iEvent.id().event();
 
-//vector<CSCDetID> chamberList;
-//chamberList.clear();
-endcapList.clear();
-stationList.clear();
-ringList.clear();
-chamberList.clear();
-eventList.clear();
-runList.clear();
-
 vector<WIRE>   wire_container;
 vector<STRIP>  strip_container;
 vector<COMPARATOR> com_container;
@@ -295,42 +332,14 @@ vector<CSCIDLCTs> clct_emul_container;
 vector<CSCIDLCTs> lct_container;
 vector<CSCIDLCTs> lct_emul_container;
 
-//==========================Get event list for display================
-ifstream file(eventlistFile);
-while (file)
- {
-     string line;
-     getline(file, line);
-     istringstream is(line);
-     while (is) {
-
-           int run;
-           is >> run;
-
-           double event;
-           is >> event;
-           eventList.push_back(event);
-
-           int endcap; is >> endcap;
-           endcapList.push_back(endcap);
-
-           int station; is >> station;
-           stationList.push_back(station);
-
-           int ring; is >> ring;
-           ringList.push_back(ring);
-
-           int chamber; is >> chamber;
-           chamberList.push_back(chamber);
-
-           }
-
-  }
 
 
+if (doDebug) 
+    cout <<"this run "<< Run <<" this Event "<< Event << endl;
 if (find (runList.begin(), runList.end(), Run) == runList.end()) return;
 if (find (eventList.begin(), eventList.end(), Event) == eventList.end()) return;
 
+//if (doDebug) cout <<"start to process this event "<< Event << std::endl;
 /*
 CSCDetID chamberID;
 
@@ -357,7 +366,7 @@ edm::Handle<CSCWireDigiCollection> wires;
 //iEvent.getByLabel(wireDigiTag,wires);
 iEvent.getByToken(wireDigiTagSrc, wires);
 
-
+if (doDebug) cout <<"Event "<<Event <<" collecting wire digi "<< endl;
 for (CSCWireDigiCollection::DigiRangeIterator wi=wires->begin(); wi!=wires->end(); wi++) {
     CSCDetId id = (CSCDetId)(*wi).first;
     std::vector<CSCWireDigi>::const_iterator wireIt = (*wi).second.first;
@@ -366,9 +375,9 @@ for (CSCWireDigiCollection::DigiRangeIterator wi=wires->begin(); wi!=wires->end(
     CSCDetID tmpID;
     WIRE tmpWIRE;
 
-if (doDebug) {
-   if (!(id.endcap() == testE && id.station() == testS && id.ring() == testR && id.chamber() == testC ) ) continue;
-   }
+//if (doDebug) {
+//   if (!(id.endcap() == testE && id.station() == testS && id.ring() == testR && id.chamber() == testC ) ) continue;
+//   }
 
     tmpID.Endcap = id.endcap();
     tmpID.Ring = id.ring();//==4 ? 1 : id.ring();
@@ -386,8 +395,8 @@ if (doDebug) {
        tmpWG.NumberTimeBin = int((wireIt->getTimeBinsOn()).size());
 
        tmpWIRE.second.push_back(tmpWG);
-//if (doDebug) cout << id << endl;
-//if (doDebug) cout << "wg: " << tmpWG.WireGroup << ", time: " << tmpWG.TimeBin << endl;
+        if (doDebug) cout << id << endl;
+        if (doDebug) cout << "wg: " << tmpWG.WireGroup << ", time: " << tmpWG.TimeBin << endl;
 
        }// all wires
   
@@ -406,6 +415,7 @@ edm::Handle<CSCStripDigiCollection> strips;
 //iEvent.getByLabel(wireDigiTag,wires);
 iEvent.getByToken(stripDigiTagSrc, strips);
 
+if (doDebug) cout <<"Event "<<Event <<" collecting strip digi "<< endl;
 for (CSCStripDigiCollection::DigiRangeIterator si=strips->begin(); si!=strips->end(); si++) {
     CSCDetId id = (CSCDetId)(*si).first;
     std::vector<CSCStripDigi>::const_iterator stripIt = (*si).second.first;
@@ -420,9 +430,9 @@ for (CSCStripDigiCollection::DigiRangeIterator si=strips->begin(); si!=strips->e
     tmpID.Chamber = id.chamber();
     tmpID.Layer = id.layer();
 
-if (doDebug) {
-   if (!(id.endcap() == testE && id.station() == testS && id.ring() == testR && id.chamber() == testC ) ) continue;
-   }
+//if (doDebug) {
+//   if (!(id.endcap() == testE && id.station() == testS && id.ring() == testR && id.chamber() == testC ) ) continue;
+//   }
 
     for( ; stripIt != lastStrip; ++stripIt) {
 
@@ -456,8 +466,8 @@ if (doDebug) {
            }//loop over all 6 time bins for each strip, from 2 to 7
 //cout << endl;
 
-//if (doDebug) cout << id << endl;
-//if (doDebug&&maxADC>0) cout << "strip: " << tmpSP.Strip << ", adc: " << maxADC << endl;
+        if (doDebug) cout << id << endl;
+        if (doDebug&&maxADC>0) cout << "strip: " << tmpSP.Strip << ", adc: " << maxADC << endl;
 
        tmpSP.ADCTotal = adcTotal;
        tmpSP.MaxADC = maxADC;
@@ -482,13 +492,14 @@ edm::Handle<CSCComparatorDigiCollection> comparators;
 iEvent.getByToken(compDigiTagSrc, comparators);
 
 
+if (doDebug) cout <<"Event "<<Event <<" collecting comparator digi "<< endl;
 for (CSCComparatorDigiCollection::DigiRangeIterator com=comparators->begin(); com!=comparators->end(); com++) {
 
     CSCDetId id = (CSCDetId)(*com).first;
 
-if (doDebug) {
-   if (!(id.endcap() == testE && id.station() == testS && id.ring() == testR && id.chamber() == testC ) ) continue;
-   }
+//if (doDebug) {
+//   if (!(id.endcap() == testE && id.station() == testS && id.ring() == testR && id.chamber() == testC ) ) continue;
+//   }
 
     std::vector<CSCComparatorDigi>::const_iterator comparatorIt = (*com).second.first;
     std::vector<CSCComparatorDigi>::const_iterator lastComparator = (*com).second.second;
@@ -512,8 +523,8 @@ if (doDebug) {
        tmpCOM.TimeBin = comparatorIt->getTimeBin();
        tmpCOM.ComparatorNumber = comparatorIt->getComparator();
        if (id.ring() == 4) tmpCOM.ComparatorNumber+=128;
-//if (doDebug) cout << id << endl;
-//if (doDebug) cout << "strip: " << tmpCOM.Strip << ", comparator: " << tmpCOM.ComparatorNumber << endl;
+       if (doDebug) cout << id << endl;
+       if (doDebug) cout << "strip: " << tmpCOM.Strip << ", comparator: " << tmpCOM.ComparatorNumber << endl;
        tmpCOMPARATOR.second.push_back(tmpCOM);
 
        }
@@ -546,6 +557,7 @@ edm::Handle<CSCALCTDigiCollection> alcts_emul;
 edm::Handle<CSCCLCTDigiCollection> clcts_emul;
 // LCT
 edm::Handle<CSCCorrelatedLCTDigiCollection> lcts_emul;
+if (doDebug) cout <<"Event "<<Event <<" collecting ALCT/CLCT/LCT "<< endl;
 if (addEmulation){
    try{
 	  iEvent.getByToken(alctDigiTagSrc_emul, alcts_emul);
@@ -585,6 +597,8 @@ for (int i = 0; i < int(eventList.size()); i++) {
    tmpId.Station =  stationL;
    tmpId.Ring = ringL;
    tmpId.Chamber = chamberL;
+   if (doDebug) 
+       cout <<"Start to display event "<< eventL <<" "<< tmpId <<endl;
 
    WireStripDisplay(eventDisplayDir, tmpId, wire_container, strip_container, com_container, alct_container, alct_emul_container, clct_container, clct_emul_container, lct_container, lct_emul_container, usedChamber, Run, Event, addEmulation);
 }
@@ -635,7 +649,7 @@ void GifDisplay::fillALCT(edm::Handle<CSCALCTDigiCollection> digicoll, vector<CS
 	tmplct.BX = digiIt->getBX();
 	tmpidlcts.second.push_back(tmplct);
 
-	  if (doDebug) cout << idLCT << endl;
+	  if (doDebug) cout <<"fillALCT "<< idLCT << endl;
 	  if (doDebug) {
 	  cout << "ALCT strip: " << tmplct.keyStrip;
 	  cout << " keyWG: " << tmplct.keyWG;
@@ -679,7 +693,7 @@ void GifDisplay::fillCLCT(edm::Handle<CSCCLCTDigiCollection> digicoll, vector<CS
 	tmplct.BX = digiIt->getBX();
 	tmpidlcts.second.push_back(tmplct);
 
-	  if (doDebug) cout << idLCT << endl;
+	  if (doDebug) cout <<"fillCLCT "<< idLCT << endl;
 	  if (doDebug) {
 	  cout << "CLCT strip: " << tmplct.keyStrip;
 	  cout << " keyWG: " << tmplct.keyWG;
@@ -724,7 +738,7 @@ void GifDisplay::fillCorrLCT(edm::Handle<CSCCorrelatedLCTDigiCollection> digicol
 	tmplct.BX = digiIt->getBX();
 	tmpidlcts.second.push_back(tmplct);
 
-	  if (doDebug) cout << idLCT << endl;
+	  if (doDebug) cout <<"fillLCT "<< idLCT << endl;
 	  if (doDebug) {
 	  cout << "CorrelatedLCT strip: " << digiIt->getStrip();
 	  cout << " keyWG: " << digiIt->getKeyWG();
