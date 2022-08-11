@@ -26,7 +26,7 @@ scram b -j 9
 ## Examples to run CSC display
 
 >```
->runDisplay.sh
+>./runDisplay.sh
 >```
 Make sure that sample path and plot directory are replaced with yours
 ## Reference
