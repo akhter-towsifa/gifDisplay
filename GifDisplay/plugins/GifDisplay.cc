@@ -35,19 +35,19 @@
 
 #include <DataFormats/Provenance/interface/EventID.h> 
 
-
+#include "SimDataFormats/TrackingHit/interface/PSimHitContainer.h"
 #include "DataFormats/CSCDigi/interface/CSCWireDigi.h"
- #include "DataFormats/CSCDigi/interface/CSCWireDigiCollection.h"
- #include "DataFormats/CSCDigi/interface/CSCStripDigi.h"
- #include "DataFormats/CSCDigi/interface/CSCStripDigiCollection.h"
- #include "DataFormats/CSCDigi/interface/CSCComparatorDigi.h"
- #include "DataFormats/CSCDigi/interface/CSCComparatorDigiCollection.h"
- #include "DataFormats/CSCDigi/interface/CSCALCTDigi.h"
- #include "DataFormats/CSCDigi/interface/CSCALCTDigiCollection.h"
- #include "DataFormats/CSCDigi/interface/CSCCLCTDigi.h"
- #include "DataFormats/CSCDigi/interface/CSCCLCTDigiCollection.h"
- #include "DataFormats/CSCDigi/interface/CSCCorrelatedLCTDigi.h"
- #include "DataFormats/CSCDigi/interface/CSCCorrelatedLCTDigiCollection.h"
+#include "DataFormats/CSCDigi/interface/CSCWireDigiCollection.h"
+#include "DataFormats/CSCDigi/interface/CSCStripDigi.h"
+#include "DataFormats/CSCDigi/interface/CSCStripDigiCollection.h"
+#include "DataFormats/CSCDigi/interface/CSCComparatorDigi.h"
+#include "DataFormats/CSCDigi/interface/CSCComparatorDigiCollection.h"
+#include "DataFormats/CSCDigi/interface/CSCALCTDigi.h"
+#include "DataFormats/CSCDigi/interface/CSCALCTDigiCollection.h"
+#include "DataFormats/CSCDigi/interface/CSCCLCTDigi.h"
+#include "DataFormats/CSCDigi/interface/CSCCLCTDigiCollection.h"
+#include "DataFormats/CSCDigi/interface/CSCCorrelatedLCTDigi.h"
+#include "DataFormats/CSCDigi/interface/CSCCorrelatedLCTDigiCollection.h"
 
  
 #include "DataFormats/MuonDetId/interface/CSCDetId.h"
@@ -147,6 +147,8 @@ class GifDisplay : public edm::one::EDAnalyzer<edm::one::SharedResources>  {
 //edm::InputTag stripDigiTag;
 //edm::InputTag wireDigiTag;
 //edm::InputTag comparatorDigiTag;
+  edm::EDGetTokenT<edm::PSimHitContainer> simHitTagSrc;
+
   edm::EDGetTokenT<CSCWireDigiCollection> wireDigiTagSrc;
   edm::EDGetTokenT<CSCStripDigiCollection> stripDigiTagSrc;
   edm::EDGetTokenT<CSCComparatorDigiCollection> compDigiTagSrc;
@@ -212,6 +214,7 @@ fout->cd();
 //stripDigiTag  = iConfig.getParameter<edm::InputTag>("stripDigiTag");
 //wireDigiTag  = iConfig.getParameter<edm::InputTag>("wireDigiTag");
 //comparatorDigiTag = iConfig.getParameter<edm::InputTag>("comparatorDigiTag");
+  simHitTagSrc=consumes<edm::PSimHitContainer>(iConfig.getUntrackedParameter<edm::InputTag>("simHitTagSrc")),
   wireDigiTagSrc=consumes<CSCWireDigiCollection>(iConfig.getUntrackedParameter<edm::InputTag>("wireDigiTagSrc")),
   stripDigiTagSrc=consumes<CSCStripDigiCollection>(iConfig.getUntrackedParameter<edm::InputTag>("stripDigiTagSrc")),
   compDigiTagSrc=consumes<CSCComparatorDigiCollection>(iConfig.getUntrackedParameter<edm::InputTag>("compDigiTagSrc")),
@@ -227,7 +230,9 @@ fout->cd();
 
 
   eventDisplayDir = iConfig.getUntrackedParameter<std::string>("eventDisplayDir","/home/mhl/public_html/2017/20171025_cscSeg/eventdisplay/");
-  eventlistFile = "eventList.txt";
+  eventlistFile = iConfig.getUntrackedParameter<std::string>("eventList","eventList.txt");
+  std::cout <<"Eventlist file "<< eventlistFile <<" outfolder "<< eventDisplayDir << (addEmulation ? " addEmulation":" NOEmulation")<< std::endl;
+ //eventlistFile = "eventList.txt";
   //chamberType = iConfig.getUntrackedParameter<std::string>("chamberType", "11");
   doDebug = iConfig.getUntrackedParameter<int>("debug", 0);
   addEmulation = iConfig.getUntrackedParameter<bool>("addEmulation", false);
@@ -315,6 +320,7 @@ double Run,Event;
 Run = iEvent.id().run();
 Event = iEvent.id().event();
 
+vector<SIMHIT>   simhit_container;
 vector<WIRE>   wire_container;
 vector<STRIP>  strip_container;
 vector<COMPARATOR> com_container;
@@ -355,10 +361,60 @@ if (chamberType == "11"){
            }
 */
 
+edm::Handle<edm::PSimHitContainer> simHits;
+try{
+    iEvent.getByToken(simHitTagSrc, simHits);
+    bool simMuOnly_ = false;
+    if (doDebug > 1) cout <<"Event "<<Event <<" collecting simHits "<< endl;
+    for (const auto& sh : *simHits.product()){
+        int pdgid = sh.particleType();
+        if (simMuOnly_ && std::abs(pdgid) != 13) continue;
+        const CSCDetId& id(sh.detUnitId()); //layer id 
+        CSCDetID tmpID;
+        SimHit tmpSH;
+
+        tmpID.Endcap = id.endcap();
+        tmpID.Ring = id.ring();//==4 ? 1 : id.ring();
+        tmpID.Station = id.station();
+        tmpID.Chamber = id.chamber();
+        tmpID.Layer = id.layer();
+
+        const LocalPoint& lp = sh.entryPoint();
+        const auto& layerG(cscGeom->layer(sh.detUnitId())->geometry());
+        int nearestWire(layerG->nearestWire(lp));
+        tmpSH.WireGroup = layerG->wireGroup(nearestWire); 
+        tmpSH.Strip = layerG->nearestStrip(lp);
+        tmpSH.PdgId = abs(pdgid);
+        tmpSH.Stripf = layerG->strip(lp);
+        //cout <<"chamber "<< id <<" CSC simhit pdgid "<< pdgid <<" wg "<< tmpSH.WireGroup <<" strip "<< tmpSH.Strip << endl;
+        bool found = false;
+        for (auto& idsh : simhit_container){
+           if (idsh.first == tmpID) {
+               idsh.second.emplace_back(tmpSH);
+               found = true;
+               //cout <<"found exsit id "<< tmpID <<" size of simhits "<< idsh.second.size() << std::endl;
+               break;
+           }
+        }
+        if (not found){
+           //cout <<"add new id to  simhit_container "<< id << endl;
+           SIMHIT id_simhit_tmp;
+           id_simhit_tmp.first  = tmpID;
+           id_simhit_tmp.second.push_back(tmpSH);
+           simhit_container.push_back(id_simhit_tmp); 
+        }
+
+    }
+} catch (cms::Exception){
+ std::cout <<" failed to find CSC simhits, ignore "<< std::endl;
+ addEmulation = false;
+}
+
+//for (auto id_sh : simhit_container)
+//    cout <<"simtcontainer id "<< id_sh.first <<" size "<< id_sh.second.size() << endl;
+
 //========================== WIRES ========================
-//edm::EDGetTokenT<CSCWireDigiCollection> w_token = consumes<CSCWireDigiCollection>(wireDigiTag);
 edm::Handle<CSCWireDigiCollection> wires;
-//iEvent.getByLabel(wireDigiTag,wires);
 iEvent.getByToken(wireDigiTagSrc, wires);
 
 if (doDebug > 1) cout <<"Event "<<Event <<" collecting wire digi "<< endl;
@@ -587,7 +643,7 @@ for (int i = 0; i < int(eventList.size()); i++) {
    if (doDebug > 0) 
        cout <<"Start to display event "<< eventL <<" "<< tmpId <<endl;
 
-   WireStripDisplay(eventDisplayDir, tmpId, wire_container, strip_container, com_container, alct_container, alct_emul_container, clct_container, clct_emul_container, lct_container, lct_emul_container, usedChamber, Run, Event, addEmulation);
+   WireStripDisplay(eventDisplayDir, tmpId, simhit_container, wire_container, strip_container, com_container, alct_container, alct_emul_container, clct_container, clct_emul_container, lct_container, lct_emul_container, usedChamber, Run, Event, addEmulation);
 }
 //   }
 

@@ -76,6 +76,32 @@ struct CSCDetID{
 
 };
 
+struct  SimHit{
+
+  int WireGroup;
+  float Stripf;
+  int Strip;
+  int PdgId;
+
+  bool operator == ( const SimHit& sh) const{
+
+       return sh.WireGroup == this->WireGroup && sh.Strip == this->Strip && sh.PdgId == this->PdgId;
+
+  }
+
+
+  SimHit(){
+
+        this->WireGroup = -99;
+        this->Strip = -99;
+        this->Stripf = -99;
+        this->PdgId = 0;
+
+        }
+
+};
+
+
 struct  Wire{
 
   int WireGroup;

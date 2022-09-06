@@ -20,12 +20,13 @@
 #define PI 3.14159265
 using namespace std;
 
+typedef pair<CSCDetID, vector<SimHit> > SIMHIT;
 typedef pair<CSCDetID, vector<Wire> > WIRE;
 typedef pair<CSCDetID, vector<Strips> > STRIP;
 typedef pair<CSCDetID, vector<Comparator> > COMPARATOR;
 typedef pair<CSCDetID, vector<CorrelatedLCT> > CSCIDLCTs;
 
-void WireStripDisplay(TString address, CSCDetID id, vector<WIRE> &wire, vector<STRIP> &strip, vector<COMPARATOR> &comparator, 
+void WireStripDisplay(TString address, CSCDetID id, vector<SIMHIT> &simhits, vector<WIRE> &wire, vector<STRIP> &strip, vector<COMPARATOR> &comparator, 
 			vector<CSCIDLCTs> &idalcts,vector<CSCIDLCTs> &idalcts_emul, 
 			vector<CSCIDLCTs> &idclcts,vector<CSCIDLCTs> &idclcts_emul, 
 			vector<CSCIDLCTs> &idlcts,vector<CSCIDLCTs> &idlcts_emul, 
@@ -34,7 +35,9 @@ bool ChamberUsedForEventDisplay(CSCDetID id, vector<CSCDetID> usedChamber);
 void SetSaveNameLegendName(TString& name, TString& legendName, TString address, CSCDetID id, int Run, int Event);
 void SaveUsedChamber(CSCDetID id, vector<int> layer_strip, vector<int> layer_wire, vector<int> layer_comparator, vector<CSCDetID> &usedChamber);
 void StripDisplay(CSCDetID id, vector<int>& layer_strip, vector<STRIP>& strip, double cfeb[], TH2F* stripDis, TH2F* stripDis_text, TH1F* cfebNotReadOut, TH1F* cfebNotInstall_me21, TH1F* cfebNotInstall_me11);
+void SimHitDisplay(CSCDetID id, vector<int>& layer_simhit, vector<SIMHIT>& simhit, TH2F* stripDis, TH2F* stripDis_text);
 void MakeOneLayerStripDisplay(int layer, vector<Strips> &s, TH2F* stripDisplay, int option, bool doStagger);
+void MakeOneLayerSimHitDisplay(int layer, vector<SimHit> &s, TH2F* stripDisplay, int option, bool doStagger);
 void MakeOneLayerWireDisplay(int layer, vector<Wire> &w, TH2F* wireDisplay);
 void MakeOneLayerComparatorDisplay(int layer, vector<Comparator> &c, TH2F* comparatorDisplay, bool doStagger);
 vector<vector<double> > StripHitDisplay(CSCDetID id, vector<int>& layer_strip, vector<int>& layer_comparator, vector<STRIP> strip, vector<COMPARATOR> &comparator, double cfeb[]);

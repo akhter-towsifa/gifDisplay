@@ -45,7 +45,7 @@ options.register("dropNonMuonCollections", True, VarParsing.multiplicity.singlet
                  "Option to drop most non-muon collections generally considered unnecessary for GEM/CSC analysis")
 options.register("dqmOutputFile", "step_DQM.root", VarParsing.multiplicity.singleton, VarParsing.varType.string,
                  "Name of the DQM output file. Default: step_DQM.root")
-options.register("saveEdmOutput", True, VarParsing.multiplicity.singleton, VarParsing.varType.bool,
+options.register("saveEdmOutput", False, VarParsing.multiplicity.singleton, VarParsing.varType.bool,
                  "Set to True if you want to keep the EDM ROOT after unpacking and re-emulating.")
 options.parseArguments()
 process_era = Run3
@@ -144,6 +144,8 @@ if options.l1:
       l1csc.commonParam.runCCLUT_TMB = cms.bool(options.runCCLUTTMB)
       l1csc.commonParam.runME11ILT = options.runME11ILT
       l1csc.commonParam.runME21ILT = options.runME21ILT
+      l1csc.tmbPhase2.tmbReadoutEarliest2 = cms.bool(False)
+      l1csc.tmbPhase2GE11.tmbReadoutEarliest2 = cms.bool(False)
       ## running on unpacked data, or after running the unpacker
       if (not options.mc or options.unpack):
             l1csc.CSCComparatorDigiProducer = "muonCSCDigis:MuonCSCComparatorDigi"
@@ -170,9 +172,28 @@ process.simCscTriggerPrimitiveDigisRun2.commonParam.runPhase2 = False
 process.simCscTriggerPrimitiveDigisRun2.clctPhase1.verbosity = cms.int32(0)
 process.simCscTriggerPrimitiveDigisRun2.alctPhase1.verbosity = cms.int32(0)
 process.simCscTriggerPrimitiveDigisRun2.tmbPhase1.verbosity = cms.int32(0)
+process.simCscTriggerPrimitiveDigisRun2.tmbPhase1.tmbReadoutEarliest2 = cms.bool(False)
 print("Run2 emulation, common parameter ", process.simCscTriggerPrimitiveDigisRun2.commonParam)
 print("Run2 emulation, CLCT parameter ", process.simCscTriggerPrimitiveDigisRun2.clctPhase1)
 process.simCscTriggerPrimitiveDigisRun2.commonParam.GEMPadDigiClusterProducer = cms.InputTag("simMuonGEMPadDigiClusters")
+
+## Run-3 patterns with CCLUT, with ILT, no deadtime zone
+process.simCscTriggerPrimitiveDigisRun3CCLUTv0 = process.cscTriggerPrimitiveDigis.clone()
+process.simCscTriggerPrimitiveDigisRun3CCLUTv0.commonParam.runME11Up = cms.bool(True)
+process.simCscTriggerPrimitiveDigisRun3CCLUTv0.commonParam.runME21Up = cms.bool(True)
+process.simCscTriggerPrimitiveDigisRun3CCLUTv0.commonParam.runME31Up = cms.bool(True)
+process.simCscTriggerPrimitiveDigisRun3CCLUTv0.commonParam.runME41Up = cms.bool(True)
+process.simCscTriggerPrimitiveDigisRun3CCLUTv0.commonParam.runCCLUT = cms.bool(True)
+process.simCscTriggerPrimitiveDigisRun3CCLUTv0.commonParam.runCCLUT_OTMB = cms.bool(True)
+process.simCscTriggerPrimitiveDigisRun3CCLUTv0.commonParam.runCCLUT_TMB = cms.bool(False)
+process.simCscTriggerPrimitiveDigisRun3CCLUTv0.commonParam.runME11ILT = True
+process.simCscTriggerPrimitiveDigisRun3CCLUTv0.commonParam.run3 = True
+process.simCscTriggerPrimitiveDigisRun3CCLUTv0.commonParam.runPhase2 = True
+process.simCscTriggerPrimitiveDigisRun3CCLUTv0.commonParam.GEMPadDigiClusterProducer = cms.InputTag("simMuonGEMPadDigiClusters")
+process.simCscTriggerPrimitiveDigisRun3CCLUTv0.clctPhase2.useDeadTimeZoning = False
+print("Run3 CCLUT nodeadtime, common parameter ", process.simCscTriggerPrimitiveDigisRun3CCLUTv0.commonParam)
+print("CLCT parameter ", process.simCscTriggerPrimitiveDigisRun3CCLUTv0.clctPhase2)
+print("CLCT parameter ", process.simCscTriggerPrimitiveDigisRun3CCLUTv0.clctPhase2GEM)
 
 ## DQM monitor
 if options.dqm:
@@ -282,21 +303,22 @@ for line in fevents:
    totEvents = totEvents+1
    #print("run ",runnumber, "eventnumber ",eventnumber)
 print("Events to run ", process.source.eventsToProcess)
-process.maxEvents.input = totEvents
+#process.maxEvents.input = totEvents
+print("process.maxEvents ", process.maxEvents.input)
 
 #process.source.duplicateCheckMode = cms.untracked.string('noDuplicateCheck')
 ##scram b -j8 USER_CXXFLAGS="-DEDM_ML_DEBUG"
-process.MessageLogger = cms.Service("MessageLogger",
-    destinations = cms.untracked.vstring("displaydebug"),
-    displaydebug = cms.untracked.PSet(
-        extension = cms.untracked.string(".txt"),
-        threshold = cms.untracked.string("DEBUG"),
-        lineLength = cms.untracked.int32(132),
-        noLineBreaks = cms.untracked.bool(True)
-    ),
-    # debugModules = cms.untracked.vstring("*")
-    debugModules = cms.untracked.vstring("cscTriggerPrimitiveDigis")
-)
+#process.MessageLogger = cms.Service("MessageLogger",
+#    destinations = cms.untracked.vstring("displaydebug"),
+#    displaydebug = cms.untracked.PSet(
+#        extension = cms.untracked.string(".txt"),
+#        threshold = cms.untracked.string("DEBUG"),
+#        lineLength = cms.untracked.int32(132),
+#        noLineBreaks = cms.untracked.bool(True)
+#    ),
+#    # debugModules = cms.untracked.vstring("*")
+#    debugModules = cms.untracked.vstring("cscTriggerPrimitiveDigis")
+#)
 
 
 
@@ -320,6 +342,7 @@ corrlctDigiTagSrc_Emul = cms.untracked.InputTag('cscTriggerPrimitiveDigis'),
 
 addEmulation = cms.untracked.bool(options.l1 or options.l1GEM),
 debug = cms.untracked.int32(2),
+eventList = cms.untracked.string(eventlist_display),
 #directory for eventdisplay
 eventDisplayDir = cms.untracked.string(options.plotdir),
 #eventDisplayDir = cms.untracked.string("/home/mhl/public_html/2017/20171201_cscSeg/"),
@@ -329,6 +352,7 @@ chamberType = cms.untracked.string('11')
 
 if options.mc:
     process.GifDisplay.stripDigiTagSrc        = cms.untracked.InputTag("simMuonCSCDigis", "MuonCSCStripDigi")
+    process.GifDisplay.simHitTagSrc           = cms.untracked.InputTag("g4SimHits", "MuonCSCHits")
     process.GifDisplay.wireDigiTagSrc         = cms.untracked.InputTag("simMuonCSCDigis", "MuonCSCWireDigi")
     process.GifDisplay.compDigiTagSrc         = cms.untracked.InputTag("simMuonCSCDigis", "MuonCSCComparatorDigi")
     #process.GifDisplay.alctDigiTagSrc         = cms.untracked.InputTag('simCscTriggerPrimitiveDigis', '')
