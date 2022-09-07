@@ -383,7 +383,7 @@ try{
         const auto& layerG(cscGeom->layer(sh.detUnitId())->geometry());
         int nearestWire(layerG->nearestWire(lp));
         tmpSH.WireGroup = layerG->wireGroup(nearestWire); 
-        tmpSH.Strip = layerG->nearestStrip(lp);
+        tmpSH.Strip = id.ring()==4 ? layerG->nearestStrip(lp)+64 : layerG->nearestStrip(lp);
         tmpSH.PdgId = abs(pdgid);
         tmpSH.Stripf = layerG->strip(lp);
         //cout <<"chamber "<< id <<" CSC simhit pdgid "<< pdgid <<" wg "<< tmpSH.WireGroup <<" strip "<< tmpSH.Strip << endl;

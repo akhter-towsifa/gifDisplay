@@ -341,13 +341,10 @@ clctDigiTagSrc_Emul    = cms.untracked.InputTag('cscTriggerPrimitiveDigis'),
 corrlctDigiTagSrc_Emul = cms.untracked.InputTag('cscTriggerPrimitiveDigis'),
 
 addEmulation = cms.untracked.bool(options.l1 or options.l1GEM),
-debug = cms.untracked.int32(2),
+debug = cms.untracked.int32(1),
 eventList = cms.untracked.string(eventlist_display),
 #directory for eventdisplay
-eventDisplayDir = cms.untracked.string(options.plotdir),
-#eventDisplayDir = cms.untracked.string("/home/mhl/public_html/2017/20171201_cscSeg/"),
-#chamber type: ME1/1-11, ME2/1-21
-chamberType = cms.untracked.string('11')
+eventDisplayDir = cms.untracked.string(options.plotdir)
 )
 
 if options.mc:
