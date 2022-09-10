@@ -20,6 +20,9 @@
 #define PI 3.14159265
 using namespace std;
 
+typedef pair<GEMDetID, vector<SimHit> > GEMSIMHIT;
+typedef pair<GEMDetID, vector<GEMPad> > GEMPAD;
+typedef pair<GEMDetID, vector<GEMPadCluster> > GEMCLUSTER;
 typedef pair<CSCDetID, vector<SimHit> > SIMHIT;
 typedef pair<CSCDetID, vector<Wire> > WIRE;
 typedef pair<CSCDetID, vector<Strips> > STRIP;
@@ -30,8 +33,9 @@ void WireStripDisplay(TString address, CSCDetID id, vector<SIMHIT> &simhits, vec
 			vector<CSCIDLCTs> &idalcts,vector<CSCIDLCTs> &idalcts_emul, 
 			vector<CSCIDLCTs> &idclcts,vector<CSCIDLCTs> &idclcts_emul, 
 			vector<CSCIDLCTs> &idlcts,vector<CSCIDLCTs> &idlcts_emul, 
-			vector<CSCDetID> &usedChamber, int Run, int Event, bool addEmulation);
+			vector<CSCDetID> &usedChamber, int Run, int Event, bool addEmulation, int doDebug=0);
 bool ChamberUsedForEventDisplay(CSCDetID id, vector<CSCDetID> usedChamber);
+bool GEMChamberUsedForEventDisplay(CSCDetID id, vector<CSCDetID> usedChamber);
 void SetSaveNameLegendName(TString& name, TString& legendName, TString address, CSCDetID id, int Run, int Event);
 void SaveUsedChamber(CSCDetID id, vector<int> layer_strip, vector<int> layer_wire, vector<int> layer_comparator, vector<CSCDetID> &usedChamber);
 void StripDisplay(CSCDetID id, vector<int>& layer_strip, vector<STRIP>& strip, double cfeb[], TH2F* stripDis, TH2F* stripDis_text, TH1F* cfebNotReadOut, TH1F* cfebNotInstall_me21, TH1F* cfebNotInstall_me11);
@@ -67,5 +71,16 @@ void ComparatorDisplay(CSCDetID id, vector<int>& layer_comparator, vector<COMPAR
 void SetPlotDetail_StripHit(TGraph* stripHitDis);
 
 vector<CorrelatedLCT> findStubsInChamber(CSCDetID id, vector<CSCIDLCTs> alllcts);
+
+
+//GEM display part
+void GEMPadDisplay(TString address, GEMDetID id, vector<GEMSIMHIT> &simhits, vector<GEMPAD> & gempads, vector<GEMCLUSTER> &gemclusters,\
+ vector<GEMDetID> &usedChamber, int Run, int Event, int doDebug= 0);
+void SetSaveNameLegendNameGEM(TString& name, TString& legendName, TString address, GEMDetID id, int Run, int Event);
+void GEMSimHitDisplay(GEMDetID id, vector<GEMDetID>& allIds, vector<GEMSIMHIT>& gemsimHits, TH2F* stripDis, int doDebug=0);
+void MakeOneLayerGEMSimHitDisplay(GEMDetID tempId, vector<SimHit> &shs, TH2F* stripDisplay);
+void PadDigiDisplay(GEMDetID id, vector<GEMDetID>& allIds, vector<GEMPAD>& gempads, TH2F*padDis,int doDebug=0);
+void MakeOneLayerGEMPadDisplay(GEMDetID tempId, vector<GEMPad> &pads, TH2F* padDisplay);
+vector<GEMPadCluster> findClustersInChamber(GEMDetID id, vector<GEMCLUSTER>& allcluster);
 
 #endif

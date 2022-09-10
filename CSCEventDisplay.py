@@ -293,6 +293,8 @@ fevents = open(eventlist_display, 'r')
 totEvents = 0
 evlist = []
 for line in fevents:
+   if line.startswith("===="): break
+   if not line[0].isdigit(): continue
    runnumber = int(line.split()[0])
    eventnumber = int(line.split()[1])
    run_event_str = "%d:%d"%(runnumber, eventnumber)
@@ -340,7 +342,15 @@ alctDigiTagSrc_Emul    = cms.untracked.InputTag('cscTriggerPrimitiveDigis'),
 clctDigiTagSrc_Emul    = cms.untracked.InputTag('cscTriggerPrimitiveDigis'),
 corrlctDigiTagSrc_Emul = cms.untracked.InputTag('cscTriggerPrimitiveDigis'),
 
+simHitTagSrc           = cms.untracked.InputTag(""),
+gemsimHitTagSrc        = cms.untracked.InputTag(""),
+gemPadTagSrc           = cms.untracked.InputTag(""),
+gemPadClusterTagSrc    = cms.untracked.InputTag(""),
+
 addEmulation = cms.untracked.bool(options.l1 or options.l1GEM),
+addSimHits = cms.untracked.bool(True),
+doGEMDisplay = cms.untracked.bool(options.runME11ILT or options.runME21ILT or options.l1GEM),
+
 debug = cms.untracked.int32(1),
 eventList = cms.untracked.string(eventlist_display),
 #directory for eventdisplay
@@ -350,6 +360,7 @@ eventDisplayDir = cms.untracked.string(options.plotdir)
 if options.mc:
     process.GifDisplay.stripDigiTagSrc        = cms.untracked.InputTag("simMuonCSCDigis", "MuonCSCStripDigi")
     process.GifDisplay.simHitTagSrc           = cms.untracked.InputTag("g4SimHits", "MuonCSCHits")
+    process.GifDisplay.gemsimHitTagSrc        = cms.untracked.InputTag("g4SimHits", "MuonGEMHits")
     process.GifDisplay.wireDigiTagSrc         = cms.untracked.InputTag("simMuonCSCDigis", "MuonCSCWireDigi")
     process.GifDisplay.compDigiTagSrc         = cms.untracked.InputTag("simMuonCSCDigis", "MuonCSCComparatorDigi")
     #process.GifDisplay.alctDigiTagSrc         = cms.untracked.InputTag('simCscTriggerPrimitiveDigis', '')
@@ -358,9 +369,16 @@ if options.mc:
     process.GifDisplay.alctDigiTagSrc         = cms.untracked.InputTag('simCscTriggerPrimitiveDigisRun2', '', processName)
     process.GifDisplay.clctDigiTagSrc         = cms.untracked.InputTag('simCscTriggerPrimitiveDigisRun2', '', processName)
     process.GifDisplay.corrlctDigiTagSrc      = cms.untracked.InputTag('simCscTriggerPrimitiveDigisRun2', '', processName)
+    #process.GifDisplay.alctDigiTagSrc         = cms.untracked.InputTag('simCscTriggerPrimitiveDigisRun3CCLUTv0', '', processName)
+    #process.GifDisplay.clctDigiTagSrc         = cms.untracked.InputTag('simCscTriggerPrimitiveDigisRun3CCLUTv0', '', processName)
+    #process.GifDisplay.corrlctDigiTagSrc      = cms.untracked.InputTag('simCscTriggerPrimitiveDigisRun3CCLUTv0', '', processName)
     process.GifDisplay.alctDigiTagSrc_Emul    = cms.untracked.InputTag('cscTriggerPrimitiveDigis', "",processName)
     process.GifDisplay.clctDigiTagSrc_Emul    = cms.untracked.InputTag('cscTriggerPrimitiveDigis', "",processName)
     process.GifDisplay.corrlctDigiTagSrc_Emul = cms.untracked.InputTag('cscTriggerPrimitiveDigis', "",processName)
+if options.runME11ILT or options.runME21ILT or options.l1GEM:
+    #process.GifDisplay.gemPadTagSrc          = cms.untracked.InputTag('MuonGEMPadDigis')
+    process.GifDisplay.gemPadTagSrc          = cms.untracked.InputTag('simMuonGEMPadDigis')
+    process.GifDisplay.gemPadClusterTagSrc   = cms.untracked.InputTag('simMuonGEMPadDigiClusters')
 
 #process.p = cms.Path(process.muonCSCDigis * process.cscTriggerPrimitiveDigis * process.GifDisplay)
 process.display = cms.Path(process.GifDisplay)
@@ -388,6 +406,7 @@ process.l1sequence = cms.Sequence(
         process.simMuonGEMPadDigiClusters *
         l1csc *
         process.simCscTriggerPrimitiveDigisRun2
+        #process.simCscTriggerPrimitiveDigisRun3CCLUTv0
         )
 
 process.p2 = cms.Path(process.l1sequence)

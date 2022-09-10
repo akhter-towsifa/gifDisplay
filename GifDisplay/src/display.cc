@@ -43,7 +43,7 @@ void WireStripDisplay(TString address, CSCDetID id, vector<SIMHIT> &simhit, vect
 			 vector<CSCIDLCTs> &allalcts, vector<CSCIDLCTs> &allalcts_emul, 
 			 vector<CSCIDLCTs> &allclcts, vector<CSCIDLCTs> &allclcts_emul, 
 			 vector<CSCIDLCTs> &alllcts, vector<CSCIDLCTs> &alllcts_emul, 
-			 vector<CSCDetID> &usedChamber, int Run, int Event, bool addEmulation){
+			 vector<CSCDetID> &usedChamber, int Run, int Event, bool addEmulation, int doDebug){
 
         gStyle->SetPalette(55);
 
@@ -341,13 +341,13 @@ void SetSaveNameLegendName(TString& name, TString& legendName, TString address, 
            if (id.Endcap == 1){
               legendName = "ME+" + NumberToString(id.Station) + "/" + NumberToString(id.Ring) + "/" + NumberToString(id.Chamber) + space+space + "Run #" + NumberToString(Run) + "  " + "Event #" + NumberToString(Event);
 
-              name = address + "/MEPlus" + NumberToString(id.Station) + "_" + NumberToString(id.Ring) + "_" + NumberToString(id.Chamber) +"_"+NumberToString(Run) + "_" + NumberToString(Event);
+              name = address +"/"+ NumberToString(Run) + "_" + NumberToString(Event)+"_MEPlus" + NumberToString(id.Station) + "_" + NumberToString(id.Ring) + "_" + NumberToString(id.Chamber);
               }
 
            if (id.Endcap == 2){
               legendName = "ME-" + NumberToString(id.Station) + "/" + NumberToString(id.Ring) + "/" + NumberToString(id.Chamber)  + space+space + "Run #" + NumberToString(Run) + "  " + "Event #" + NumberToString(Event);
 
-              name = address + "/MEMinus" + NumberToString(id.Station) + "_" + NumberToString(id.Ring) + "_" + NumberToString(id.Chamber) + "_"+NumberToString(Run) + "_"+ NumberToString(Event);
+              name = address +"/"+ NumberToString(Run) + "_" + NumberToString(Event)+"_MEMinus" + NumberToString(id.Station) + "_" + NumberToString(id.Ring) + "_" + NumberToString(id.Chamber);
 
               }
 
@@ -717,7 +717,7 @@ void SetTitle(TPaveText* pt, TString name){
 
 
    pt->SetFillColor(0);
-   pt->SetTextSize(0.1);
+   pt->SetTextSize(0.06);
    pt->SetBorderSize(0);
    pt->SetTextAlign(21);
    pt->AddText(name);

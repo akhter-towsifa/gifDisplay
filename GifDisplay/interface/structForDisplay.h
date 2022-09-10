@@ -10,41 +10,12 @@
 #include <string>
 #include <cmath>
 
-//x axis station, y axis ring
-/*TH2F* NWireGroup;
-TH2F* NStrip;
-
-NWireGroup = new TH2F("NWireGroup", "NWireGroup", 4, 1, 5, 4, 1, 5);
-NStrip = new TH2F("NStrip", "NStrip", 4, 1, 5, 4, 1, 5);
-
-NWireGroup->SetBinContent(1, 1, 48);
-NWireGroup->SetBinContent(1, 2, 48);
-NWireGroup->SetBinContent(1, 3, 48);
-NWireGroup->SetBinContent(1, 4, 48);
-NWireGroup->SetBinContent(2, 1, 112);
-NWireGroup->SetBinContent(3, 1, 96);
-NWireGroup->SetBinContent(4, 1, 96);
-NWireGroup->SetBinContent(2, 2, 64);
-NWireGroup->SetBinContent(3, 2, 64);
-NWireGroup->SetBinContent(4, 2, 64);
-
-NStrip->SetBinContent(1, 1, 48);
-NStrip->SetBinContent(1, 2, 80);
-NStrip->SetBinContent(1, 3, 64);
-NStrip->SetBinContent(1, 4, 64);
-NStrip->SetBinContent(2, 1, 80);
-NStrip->SetBinContent(3, 1, 80);
-NStrip->SetBinContent(4, 1, 80);
-NStrip->SetBinContent(2, 2, 80);
-NStrip->SetBinContent(3, 2, 80);
-NStrip->SetBinContent(4, 2, 80);
-*/
 using namespace std;
 
 inline bool doubleEqual(double a, double b) {
         return abs(a - b) < 1E-6;
 }
-
+//https://github.com/cms-sw/cmssw/blob/master/DataFormats/MuonDetId/interface/CSCDetId.h
 struct CSCDetID{
 
         double Endcap;
@@ -76,7 +47,46 @@ struct CSCDetID{
 
 };
 
-struct  SimHit{
+//GEMDetID for GE11 and GE21, use station=0 and ring=0 for ME0
+//GEMDetId from CMSSW: GEMDetId(int region, int ring, int station, int layer, int chamber, int ieta)
+//region, -1/+1, ring=1, station=0,1,2, layer=1,2. 0 is superchamber, etapartition=0-16
+//for ME0  ME0DetId(int region, int layer, int chamber, int roll); with ch0-18,region=-1/+1 layer=0-6, and roll0-10
+//ME0: https://github.com/cms-sw/cmssw/blob/master/DataFormats/MuonDetId/interface/ME0DetId.h
+struct GEMDetID{
+
+        double Endcap;
+        double Station;
+        double Ring;
+        double Chamber;
+        double Layer;
+        double Roll;
+
+        bool operator == (const GEMDetID& id)  {
+                return doubleEqual(id.Endcap, this->Endcap)
+                        && doubleEqual(id.Station, this->Station)
+                        && doubleEqual(id.Chamber, this->Chamber)
+                        && doubleEqual(id.Layer, this->Layer)
+                        && doubleEqual(id.Roll, this->Roll);
+        }
+
+        GEMDetID(){
+                this->Endcap = 0.0;
+                this->Station = 0.0;
+                this->Ring=0.0;
+                this->Chamber = 0.0;
+                this->Layer = 0.0;
+                this->Roll = 0.0;
+        }
+        friend ostream& operator << (ostream& os, const GEMDetID& id)
+        {
+                os << "E:" << id.Endcap <<" S:"<< id.Station <<" R:"<<id.Ring <<" Chamber:"<<id.Chamber <<" layer:"<<id.Layer<<" etaPartition:"<<id.Roll;
+                return os;
+        }
+
+};
+
+//https://github.com/cms-sw/cmssw/blob/master/SimDataFormats/TrackingHit/interface/PSimHit.h
+struct  SimHit{ //GEM and CSC?
 
   int WireGroup;
   float Stripf;
@@ -100,7 +110,6 @@ struct  SimHit{
         }
 
 };
-
 
 struct  Wire{
 
@@ -147,15 +156,15 @@ struct Strips{
   bool operator < ( const Strips& st) const {
 
        return  this->Strip < st.Strip;
-}
+  }
   Strips(){
 
-          this->Strip = -99;
-          this->ADCTotal = -99;
-          this->MaxADC = -99;
-          this->ADCMaxTime = -99;
+        this->Strip = -99;
+        this->ADCTotal = -99;
+        this->MaxADC = -99;
+        this->ADCMaxTime = -99;
 
-          }
+   }
 
 };
 
@@ -174,6 +183,36 @@ struct Comparator{
 
 };
 
+//https://github.com/cms-sw/cmssw/blob/master/DataFormats/GEMDigi/interface/GEMPadDigi.h
+struct GEMPad{
+
+ int Pad;
+ int TimeBin;
+
+ bool operator < ( const GEMPad& gempad) const{
+
+  return this->Pad < gempad.Pad;
+
+  }
+
+};
+
+
+//https://github.com/cms-sw/cmssw/blob/master/DataFormats/GEMDigi/interface/GEMPadDigiCluster.h
+struct GEMPadCluster{
+  int firstPad;
+  int size;
+  int nRolls;
+  int BX;
+  GEMPadCluster(){
+      this->firstPad = -1;
+      this->size = -1;
+      this->nRolls = -1;
+      this->BX = -1;
+  }
+};
+
+
 
 struct CorrelatedLCT{
   int keyStrip;
@@ -186,10 +225,9 @@ struct CorrelatedLCT{
       this->keyWG = -1;
       this->quality = -1;
       this->pattern = -1;
-	this->BX = -1;
+      this->BX = -1;
   
   }
 };
-
 
 #endif
