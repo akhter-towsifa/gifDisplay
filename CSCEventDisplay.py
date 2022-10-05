@@ -6,7 +6,9 @@ from Configuration.Eras.Era_Run2_2018_cff import Run2_2018
 import sys, os
 ### cmsRun CSCEventDisplay.py plotdir="/afs/cern.ch/work/t/tahuang/CSCEmulation/CMSSW_10_2_1/src/displayplots/"
 options = VarParsing ('analysis')
-options.register('plotdir', '', mytype=VarParsing.varType.string)
+options.register("plotdir", '', mytype=VarParsing.varType.string)
+options.register("eventListFile", 'eventList.txt', VarParsing.multiplicity.singleton, VarParsing.varType.string,
+                            "txt file contains the list of event and chamber to display")
 options.register("unpack", False, VarParsing.multiplicity.singleton, VarParsing.varType.bool,
                          "Set to True when you want to unpack the CSC DAQ data.")
 options.register("unpackGEM", False, VarParsing.multiplicity.singleton, VarParsing.varType.bool,
@@ -173,8 +175,8 @@ process.simCscTriggerPrimitiveDigisRun2.clctPhase1.verbosity = cms.int32(0)
 process.simCscTriggerPrimitiveDigisRun2.alctPhase1.verbosity = cms.int32(0)
 process.simCscTriggerPrimitiveDigisRun2.tmbPhase1.verbosity = cms.int32(0)
 process.simCscTriggerPrimitiveDigisRun2.tmbPhase1.tmbReadoutEarliest2 = cms.bool(False)
-print("Run2 emulation, common parameter ", process.simCscTriggerPrimitiveDigisRun2.commonParam)
-print("Run2 emulation, CLCT parameter ", process.simCscTriggerPrimitiveDigisRun2.clctPhase1)
+#print("Run2 emulation, common parameter ", process.simCscTriggerPrimitiveDigisRun2.commonParam)
+#print("Run2 emulation, CLCT parameter ", process.simCscTriggerPrimitiveDigisRun2.clctPhase1)
 process.simCscTriggerPrimitiveDigisRun2.commonParam.GEMPadDigiClusterProducer = cms.InputTag("simMuonGEMPadDigiClusters")
 
 ## Run-3 patterns with CCLUT, with ILT, no deadtime zone
@@ -191,9 +193,9 @@ process.simCscTriggerPrimitiveDigisRun3CCLUTv0.commonParam.run3 = True
 process.simCscTriggerPrimitiveDigisRun3CCLUTv0.commonParam.runPhase2 = True
 process.simCscTriggerPrimitiveDigisRun3CCLUTv0.commonParam.GEMPadDigiClusterProducer = cms.InputTag("simMuonGEMPadDigiClusters")
 process.simCscTriggerPrimitiveDigisRun3CCLUTv0.clctPhase2.useDeadTimeZoning = False
-print("Run3 CCLUT nodeadtime, common parameter ", process.simCscTriggerPrimitiveDigisRun3CCLUTv0.commonParam)
-print("CLCT parameter ", process.simCscTriggerPrimitiveDigisRun3CCLUTv0.clctPhase2)
-print("CLCT parameter ", process.simCscTriggerPrimitiveDigisRun3CCLUTv0.clctPhase2GEM)
+#print("Run3 CCLUT nodeadtime, common parameter ", process.simCscTriggerPrimitiveDigisRun3CCLUTv0.commonParam)
+#print("CLCT parameter ", process.simCscTriggerPrimitiveDigisRun3CCLUTv0.clctPhase2)
+#print("CLCT parameter ", process.simCscTriggerPrimitiveDigisRun3CCLUTv0.clctPhase2GEM)
 
 ## DQM monitor
 if options.dqm:
@@ -282,12 +284,18 @@ print("===============================================")
 print("input files: ")
 print(process.source.fileNames)
 print("===============================================")
+print("List of event for display", options.eventListFile)
+if os.path.isfile(options.eventListFile):
+    os.system("cat "+options.eventListFile)
+else:
+    print("file not found , exit()")
+    exit()
 
 ##eventList.txt example:
 ##run eventnumber endcap station ring chamber
 ## endcap =1: positive, =2:minus
 ## ME1a and ME1b use ring=1
-eventlist_display = "eventList.txt"
+eventlist_display = options.eventListFile
 fevents = open(eventlist_display, 'r')
 
 totEvents = 0
@@ -307,6 +315,7 @@ for line in fevents:
 print("Events to run ", process.source.eventsToProcess)
 #process.maxEvents.input = totEvents
 print("process.maxEvents ", process.maxEvents.input)
+fevents.close()
 
 #process.source.duplicateCheckMode = cms.untracked.string('noDuplicateCheck')
 ##scram b -j8 USER_CXXFLAGS="-DEDM_ML_DEBUG"
@@ -358,9 +367,9 @@ eventDisplayDir = cms.untracked.string(options.plotdir)
 )
 
 if options.mc:
-    process.GifDisplay.stripDigiTagSrc        = cms.untracked.InputTag("simMuonCSCDigis", "MuonCSCStripDigi")
     process.GifDisplay.simHitTagSrc           = cms.untracked.InputTag("g4SimHits", "MuonCSCHits")
     process.GifDisplay.gemsimHitTagSrc        = cms.untracked.InputTag("g4SimHits", "MuonGEMHits")
+    process.GifDisplay.stripDigiTagSrc        = cms.untracked.InputTag("simMuonCSCDigis", "MuonCSCStripDigi")
     process.GifDisplay.wireDigiTagSrc         = cms.untracked.InputTag("simMuonCSCDigis", "MuonCSCWireDigi")
     process.GifDisplay.compDigiTagSrc         = cms.untracked.InputTag("simMuonCSCDigis", "MuonCSCComparatorDigi")
     #process.GifDisplay.alctDigiTagSrc         = cms.untracked.InputTag('simCscTriggerPrimitiveDigis', '')
