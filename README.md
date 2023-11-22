@@ -6,8 +6,8 @@ This packge is used to display CSC hits and CSC local track for CMS events from 
 
 ## Setup
 ```
-cmsrel CMSSW_12_5_0_pre2
-cd CMSSW_12_5_0_pre2/src
+cmsrel CMSSW_12_6_0_pre2
+cd CMSSW_12_6_0_pre2/src
 cmsenv
 git clone https://github.com/tahuang1991/gifDisplay.git
 scram b -j 9
