@@ -9,7 +9,7 @@ This packge is used to display CSC hits and CSC local track for CMS events from 
 cmsrel CMSSW_12_6_0_pre2
 cd CMSSW_12_6_0_pre2/src
 cmsenv
-git clone https://github.com/tahuang1991/gifDisplay.git
+git clone https://github.com/akhter-towsifa/gifDisplay.git -b testing-setup
 scram b -j 9
 ```
 ## How to use CSC event display package 
