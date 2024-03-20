@@ -840,6 +840,7 @@ void GifDisplay::fillCLCT(edm::Handle<CSCCLCTDigiCollection> digicoll, vector<CS
       tmplct.quality =  digiIt->getQuality();
       tmplct.pattern = digiIt->getPattern();
       tmplct.BX = digiIt->getBX();
+      tmplct.run3_pattern = digiIt->getRun3Pattern();
       tmpidlcts.second.push_back(tmplct);
 
 	   if (doDebug > 2) cout <<"fillCLCT "<< idLCT << endl;

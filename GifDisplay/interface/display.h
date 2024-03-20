@@ -44,6 +44,8 @@ void MakeOneLayerStripDisplay(int layer, vector<Strips> &s, TH2F* stripDisplay, 
 void MakeOneLayerSimHitDisplay(int layer, vector<SimHit> &s, TH2F* stripDisplay, int option, bool doStagger);
 void MakeOneLayerWireDisplay(int layer, vector<Wire> &w, TH2F* wireDisplay);
 void MakeOneLayerComparatorDisplay(int layer, vector<Comparator> &c, TH2F* comparatorDisplay, bool doStagger);
+void MakeOneLayerALCT(int layer, TH2F* alctDis, vector<CorrelatedLCT>& alcts);
+void MakeOneLayerCLCT(int layer, TH2F* clctDis, vector<CorrelatedLCT>& clcts);
 vector<vector<double> > StripHitDisplay(CSCDetID id, vector<int>& layer_strip, vector<int>& layer_comparator, vector<STRIP> strip, vector<COMPARATOR> &comparator, double cfeb[]);
 vector<double> MakeComparatorHitNotReadout(vector<Comparator> c, double cfeb[]);
 void SetTitle(TPaveText* pt, TString name);
@@ -65,9 +67,9 @@ bool CheckRight(Strips &s, Strips &sR);
 bool CheckLeft(Strips &s, Strips &sL);
 template <class T>
 vector<int> FindChamberIndex(CSCDetID id, vector<T> &vec);
-void WireDisplay(CSCDetID id, vector<int>& layer_wire, vector<WIRE>& wire, TH2F* wireDis, TH2F* wireDis_text);
+void WireDisplay(CSCDetID id, vector<int>& layer_wire, vector<WIRE>& wire, TH2F* wireDis, TH2F* wireDis_text, TH2F* alctDis, vector<CorrelatedLCT>& alcts);
 //void SetEventDisplayLegend(TString legendName);
-void ComparatorDisplay(CSCDetID id, vector<int>& layer_comparator, vector<COMPARATOR>& comparator, TH2F* comparatorDis, TH2F* comparatorDis_text);
+void ComparatorDisplay(CSCDetID id, vector<int>& layer_comparator, vector<COMPARATOR>& comparator, TH2F* comparatorDis, TH2F* comparatorDis_text, TH2F* clctDis, vector<CorrelatedLCT>& clcts);
 void SetPlotDetail_StripHit(TGraph* stripHitDis);
 
 vector<CorrelatedLCT> findStubsInChamber(CSCDetID id, vector<CSCIDLCTs> alllcts);
